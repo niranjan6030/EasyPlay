@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "7-zip",
+  "title": "7-Zip",
+  "publisher": "Igor Pavlov",
+  "installerPatterns": ["7z"],
+
+  "compatibility": {
+    "rating": "untested",
+    "unsupportedReason": null,
+    "lastVerified": "2026-09-06",
+    "source": "Not yet run — the installer flow has not been exercised end to end",
+    "notes": [
+      "Not a game. This preset exists to prove the whole pipeline end to end — create a bottle, run a real Windows installer through it, then launch what the installer produced.",
+      "It is small, free and quick to install, which makes it the right smoke test before committing to a 50 GB game download.",
+      "Rated untested because the installer has not actually been run yet."
+    ]
+  },
+
+  "requires": { "backend": null, "rosetta": true, "diskGB": 1 },
+  "bottle": { "windowsVersion": "win10", "architecture": "win64", "retinaMode": false, "dpi": 96 },
+  "graphics": { "backend": "wineD3D", "dxvk": null },
+  "dllOverrides": {},
+  "environment": { "WINEESYNC": "1" },
+  "winetricks": [],
+
+  "install": {
+    "kind": "installerExecutable",
+    "steamAppID": null,
+    "installerArguments": ["/S"],
+    "hints": ["Runs the standard 7-Zip Windows installer in silent mode."]
+  },
+
+  "launch": {
+    "executableGlob": "**/7-Zip/7zFM.exe",
+    "arguments": [],
+    "workingDirectoryFromExecutable": true
+  },
+
+  "knownIssues": []
+}

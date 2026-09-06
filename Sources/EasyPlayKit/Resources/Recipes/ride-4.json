@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "id": "ride-4",
+  "title": "RIDE 4",
+  "publisher": "Milestone S.r.l.",
+  "installerPatterns": ["ride4", "ride_4"],
+
+  "compatibility": {
+    "rating": "runsGreat",
+    "unsupportedReason": null,
+    "lastVerified": "2026-09-06",
+    "source": "CodeWeavers CrossOver compatibility database",
+    "notes": [
+      "Unreal Engine 4 title using DirectX 11, which is the best-supported path on Apple Silicon.",
+      "No kernel-level anti-cheat, so nothing blocks it from running under Wine.",
+      "Rating is inherited from CrossOver's published database and has not yet been re-verified by EasyPlay on this machine.",
+      "Online multiplayer is untested."
+    ]
+  },
+
+  "requires": {
+    "backend": "gamePortingToolkit",
+    "rosetta": true,
+    "diskGB": 60
+  },
+
+  "bottle": {
+    "windowsVersion": "win10",
+    "architecture": "win64",
+    "retinaMode": true,
+    "dpi": 96
+  },
+
+  "graphics": {
+    "backend": "d3dMetal",
+    "dxvk": {
+      "version": "1.10.3",
+      "async": true,
+      "showHUD": false
+    }
+  },
+
+  "dllOverrides": {
+    "d3d11": "builtin",
+    "d3d12": "builtin",
+    "dxgi": "builtin",
+    "nvapi": "disabled",
+    "nvapi64": "disabled"
+  },
+
+  "environment": {
+    "WINEESYNC": "1",
+    "WINEMSYNC": "1",
+    "ROSETTA_ADVERTISE_AVX": "1",
+    "MTL_HUD_ENABLED": "0"
+  },
+
+  "winetricks": [],
+
+  "install": {
+    "kind": "steam",
+    "steamAppID": "1259980",
+    "installerArguments": [],
+    "hints": [
+      "RIDE 4 is sold through Steam, so EasyPlay installs the Steam client into this game's bottle first.",
+      "Sign in to Steam when it appears, then start the RIDE 4 download. EasyPlay takes over again once it finishes.",
+      "The download is roughly 50 GB. Keep the Mac awake and plugged in."
+    ]
+  },
+
+  "launch": {
+    "executableGlob": "**/RIDE4.exe",
+    "arguments": [],
+    "workingDirectoryFromExecutable": true
+  },
+
+  "knownIssues": [
+    {
+      "match": "err:module:import_dll.*(MSVCP140|VCRUNTIME140)",
+      "title": "Missing Visual C++ runtime",
+      "fix": "The game needs Microsoft's C++ runtime, which isn't in this bottle yet. EasyPlay can install it for you.",
+      "action": "winetricks:vcrun2019"
+    },
+    {
+      "match": "err:d3d.*(no adapters|failed to create device)",
+      "title": "Graphics translation didn't start",
+      "fix": "The DirectX-to-Metal layer failed to load. Switching this game to the built-in translator usually fixes it, at a cost in frame rate.",
+      "action": "graphics:wineD3D"
+    },
+    {
+      "match": "err:winediag:.*vulkan",
+      "title": "Vulkan unavailable",
+      "fix": "DXVK needs Vulkan, which isn't working here. Switch this game to D3DMetal, which talks to Metal directly and doesn't need Vulkan.",
+      "action": "graphics:d3dMetal"
+    },
+    {
+      "match": "(Steam|steamclient).*(not running|failed to initialize)",
+      "title": "Steam isn't running",
+      "fix": "RIDE 4 checks for Steam at launch. EasyPlay will start Steam in this bottle first and then retry.",
+      "action": "steam:start"
+    }
+  ]
+}

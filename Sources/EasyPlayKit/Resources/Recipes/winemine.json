@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "winemine",
+  "title": "Minesweeper (setup check)",
+  "publisher": "The Wine Project",
+  "installerPatterns": ["winemine"],
+
+  "compatibility": {
+    "rating": "runsGreat",
+    "unsupportedReason": null,
+    "lastVerified": "2026-09-06",
+    "source": "Verified by EasyPlay on Apple Silicon",
+    "notes": [
+      "A real Windows program that Wine installs into every bottle, so it needs no download and no licence.",
+      "EasyPlay uses it to confirm a new bottle can actually start a Windows program before you spend an hour installing a real game."
+    ]
+  },
+
+  "requires": { "backend": null, "rosetta": true, "diskGB": 1 },
+  "bottle": { "windowsVersion": "win10", "architecture": "win64", "retinaMode": true, "dpi": 96 },
+  "graphics": { "backend": "wineD3D", "dxvk": null },
+  "dllOverrides": {},
+  "environment": {},
+  "winetricks": [],
+
+  "install": {
+    "kind": "existingFolder",
+    "steamAppID": null,
+    "installerArguments": [],
+    "hints": ["Already present in every bottle — nothing to install."]
+  },
+
+  "launch": {
+    "executableGlob": "**/winemine.exe",
+    "arguments": [],
+    "workingDirectoryFromExecutable": false
+  },
+
+  "knownIssues": []
+}

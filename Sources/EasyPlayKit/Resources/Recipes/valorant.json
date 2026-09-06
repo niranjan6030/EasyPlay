@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "valorant",
+  "title": "VALORANT",
+  "publisher": "Riot Games",
+  "installerPatterns": ["valorant", "riotclient"],
+
+  "compatibility": {
+    "rating": "notSupported",
+    "unsupportedReason": "kernelAntiCheat",
+    "lastVerified": "2026-09-06",
+    "source": "Riot Vanguard requires a Windows kernel driver",
+    "notes": [
+      "Riot Vanguard loads as a Windows kernel driver at boot. Wine implements Windows' user-space APIs, not its kernel, so there is nothing for the driver to load into.",
+      "This is not a bug EasyPlay can work around, and no future preset will change it.",
+      "Attempting to bypass anti-cheat can also get your account banned, so EasyPlay refuses to try."
+    ]
+  },
+
+  "requires": { "backend": null, "rosetta": true, "diskGB": 40 },
+  "bottle": { "windowsVersion": "win10", "architecture": "win64", "retinaMode": true, "dpi": 96 },
+  "graphics": { "backend": "d3dMetal", "dxvk": null },
+  "dllOverrides": {},
+  "environment": {},
+  "winetricks": [],
+  "install": { "kind": "installerExecutable", "steamAppID": null, "installerArguments": [], "hints": [] },
+  "launch": { "executableGlob": "**/VALORANT.exe", "arguments": [], "workingDirectoryFromExecutable": true },
+  "knownIssues": []
+}
