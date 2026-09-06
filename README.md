@@ -106,15 +106,21 @@ Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
 - Environment detection, including deduplicating the Homebrew symlinks that make
   one Wine installation look like two
 - Bottle creation, Windows-version and DLL-override registry configuration
-- Executable discovery and launching a real Windows program inside a bottle
-- 53 unit checks across the environment builder, glob matcher, log classifier
-  and preset loader
+- **The full install flow, end to end**: a real Windows installer
+  (7-Zip 23.01 x64) auto-matched to its preset by filename, a bottle created and
+  configured, the installer run silently under Wine, the resulting `7zFM.exe`
+  located by glob, and the program launched and confirmed running as a live
+  `wine64` process before being shut down cleanly
+- 54 unit checks across the environment builder, glob matcher, log classifier
+  and preset loader — including a regression case built from the real install
+  log, asserting that Wine's harmless shortcut-builder errors raise no false
+  alarm
 
 Not yet verified end to end: the RIDE 4 preset itself. Its rating is inherited
 from CrossOver's published compatibility database, not from a local run — the
 game isn't owned yet. `COMPATIBILITY.md` says exactly which settings are
 reasoned and which are measured, and the preset is labelled accordingly in the
-UI.
+UI. The Steam-based install path it needs is also still unwritten.
 
 ---
 

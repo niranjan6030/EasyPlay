@@ -216,5 +216,5 @@ of the problem.
 |---|---|---|
 | `ride-4` | Runs Great (from CrossOver's database) | The reference implementation. |
 | `winemine` | Runs Great (verified locally) | Wine's own Minesweeper. Confirms a bottle can run Windows programs before you commit to a long download. |
-| `7-zip` | Untested | A real Windows installer, small and free — the intended installer-flow smoke test. Written, not yet run. |
+| `7-zip` | Runs Great (verified locally) | A real Windows installer, small and free — the installer-flow smoke test. Verified end to end. |
 | `valorant` | Not Supported | Demonstrates refusing a game properly, with a reason. |

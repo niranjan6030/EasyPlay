@@ -6,14 +6,14 @@
   "installerPatterns": ["7z"],
 
   "compatibility": {
-    "rating": "untested",
+    "rating": "runsGreat",
     "unsupportedReason": null,
     "lastVerified": "2026-09-06",
-    "source": "Not yet run — the installer flow has not been exercised end to end",
+    "source": "Verified by EasyPlay on an M4 Mac, Game Porting Toolkit 3.0",
     "notes": [
       "Not a game. This preset exists to prove the whole pipeline end to end — create a bottle, run a real Windows installer through it, then launch what the installer produced.",
       "It is small, free and quick to install, which makes it the right smoke test before committing to a 50 GB game download.",
-      "Rated untested because the installer has not actually been run yet."
+      "Verified end to end on 2026-09-06: installer ran silently, 7zFM.exe was discovered by glob, and it launched and stayed running."
     ]
   },
 

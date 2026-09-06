@@ -40,6 +40,20 @@ enum LogClassifierTests {
                                 "0024:err:module:import_dll Library MSVCP140.dll not found",
                                 "evidence is the whole log line, not just the matched fragment")
 
+            // A real log captured from a successful 7-Zip install. Wine always
+            // fails to build Start Menu shortcuts on macOS, and that noise must
+            // not be mistaken for a problem — a launcher that cries wolf on every
+            // successful install is worse than one that says nothing.
+            let realSuccessfulInstall = """
+            esync: up and running.
+            00f0:err:menubuilder:cx_wineshelllink wineshelllink returned -1073741772
+            00f0:err:menubuilder:InvokeShellLinker failed to build the menu
+            00f8:err:menubuilder:cx_wineshelllink wineshelllink returned -1073741772
+            00f8:err:menubuilder:InvokeShellLinker failed to build the menu
+            """
+            Harness.expect(LogClassifier().classify(log: realSuccessfulInstall, exitCode: 0).isEmpty,
+                           "Wine's harmless shortcut-builder errors raise no false alarm")
+
             Harness.expect(Diagnosis.Remedy(action: "reboot:mac") == nil,
                            "unknown remedy actions are rejected")
             Harness.expect(Diagnosis.Remedy(action: "graphics:nonsense") == nil,
