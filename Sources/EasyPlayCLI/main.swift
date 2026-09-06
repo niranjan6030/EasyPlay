@@ -316,14 +316,17 @@ func reportDiagnoses(_ diagnoses: [Diagnosis], logURL: URL?) {
 }
 
 func listGames() -> Int32 {
-    let games = GameStore().load()
+    let bottleIDs = Set(resolveBackend().map { BottleManager(backend: $0).list().map(\.id) } ?? [])
+    let games = GameStore().pruneOrphans(knownBottleIDs: bottleIDs)
     guard !games.isEmpty else {
         print("\nNo games installed yet.\n")
         return 0
     }
+    let library = RecipeLibrary()
     print("\n\(Colour.bold)Library\(Colour.reset)\n")
     for game in games.sorted(by: { $0.title < $1.title }) {
-        print("  \(Colour.bold)\(game.title)\(Colour.reset)  \(badge(for: game.compatibilityRating))")
+        let rating = game.currentRating(from: game.recipeID.flatMap { try? library.recipe(id: $0) })
+        print("  \(Colour.bold)\(game.title)\(Colour.reset)  \(badge(for: rating))")
         print("    \(Colour.dim)\(game.id)\(Colour.reset)")
         print("    \(game.executableRelativePath)")
         if let played = game.lastPlayedAt {

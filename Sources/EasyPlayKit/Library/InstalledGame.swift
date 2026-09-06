@@ -36,6 +36,17 @@ public struct InstalledGame: Codable, Identifiable, Equatable {
     public func executableURL(in bottle: Bottle) -> URL {
         bottle.url.appendingPathComponent(executableRelativePath)
     }
+
+    /// The rating to show now.
+    ///
+    /// `compatibilityRating` is a snapshot taken at install time, which goes
+    /// stale as soon as its preset is updated — a preset promoted from untested
+    /// to verified should be reflected in the library immediately. The live
+    /// preset therefore wins, and the snapshot remains the fallback for games
+    /// whose preset has since been removed.
+    public func currentRating(from recipe: Recipe?) -> CompatibilityRating {
+        recipe?.compatibility.rating ?? compatibilityRating
+    }
 }
 
 /// The installed-games list, persisted as one JSON file.
@@ -71,6 +82,21 @@ public struct GameStore {
 
     public func remove(id: String) throws {
         try save(load().filter { $0.id != id })
+    }
+
+    /// Drops entries whose bottle no longer exists.
+    ///
+    /// Cascading on delete covers EasyPlay's own deletions, but a bottle can also
+    /// vanish because someone dragged it to the Trash. The library heals itself
+    /// on load rather than showing games that cannot possibly launch.
+    @discardableResult
+    public func pruneOrphans(knownBottleIDs: Set<String>) -> [InstalledGame] {
+        let games = load()
+        let surviving = games.filter { knownBottleIDs.contains($0.bottleID) }
+        if surviving.count != games.count {
+            try? save(surviving)
+        }
+        return surviving
     }
 
     public func update(id: String, transform: (inout InstalledGame) -> Void) throws {

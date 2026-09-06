@@ -53,9 +53,14 @@ final class AppModel {
 
         Task.detached(priority: .userInitiated) {
             let report = ToolchainDetector().detect()
+            let bottles = report.preferredBackend.map { BottleManager(backend: $0).list() } ?? []
+            // Bottles can disappear outside EasyPlay, so the library is reconciled
+            // against what is actually on disk every time it reloads.
+            let games = GameStore().pruneOrphans(knownBottleIDs: Set(bottles.map(\.id)))
             await MainActor.run {
                 self.environment = report
-                self.bottles = report.preferredBackend.map { BottleManager(backend: $0).list() } ?? []
+                self.bottles = bottles
+                self.games = games
                 // A first run with nothing installed should open on setup, not on
                 // an empty library that gives no clue what to do next.
                 if !report.isReady { self.screen = .setup }
@@ -97,14 +102,8 @@ final class AppModel {
     func deleteBottle(_ bottle: Bottle) {
         guard let backend else { return }
         run(title: "Deleting \(bottle.name)") { _ in
-            let manager = BottleManager(backend: backend)
-            try manager.delete(bottle)
-            // Games living in a deleted bottle would otherwise linger as entries
-            // pointing at nothing.
-            let store = GameStore()
-            for game in store.load() where game.bottleID == bottle.id {
-                try store.remove(id: game.id)
-            }
+            // BottleManager also clears the library entries that pointed here.
+            try BottleManager(backend: backend).delete(bottle)
         }
     }
 

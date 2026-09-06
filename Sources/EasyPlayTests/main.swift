@@ -5,5 +5,6 @@ try WineEnvironmentTests.run()
 try ExecutableFinderTests.run()
 try LogClassifierTests.run()
 try RecipeLibraryTests.run()
+try GameStoreTests.run()
 
 exit(Harness.summarise())

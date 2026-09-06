@@ -156,6 +156,14 @@ development (1024650 is Port Royale 4; RIDE 4 is 1259980), and another caught
 that installer-filename matching couldn't recognise `7z2409-x64.exe` — which is
 what added `installerPatterns` to the schema.
 
+The CLI earned its keep the same way. Deleting a bottle through it left an
+orphaned library entry, because the cascade that removes games belonging to a
+deleted bottle had been written in `AppModel` — the SwiftUI layer — instead of in
+`BottleManager`. The app looked correct; the engine was incomplete. That is
+precisely the failure a second front-end exists to expose, and the fix moved the
+cascade into the engine and added `GameStore.pruneOrphans` so the library also
+heals when a bottle disappears outside EasyPlay entirely.
+
 ### Not sandboxed, and it can't be
 
 EasyPlay's purpose is executing arbitrary third-party binaries from arbitrary

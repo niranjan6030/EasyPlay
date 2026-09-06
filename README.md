@@ -111,7 +111,7 @@ Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
   configured, the installer run silently under Wine, the resulting `7zFM.exe`
   located by glob, and the program launched and confirmed running as a live
   `wine64` process before being shut down cleanly
-- 54 unit checks across the environment builder, glob matcher, log classifier
+- 61 unit checks across the environment builder, glob matcher, log classifier
   and preset loader — including a regression case built from the real install
   log, asserting that Wine's harmless shortcut-builder errors raise no false
   alarm

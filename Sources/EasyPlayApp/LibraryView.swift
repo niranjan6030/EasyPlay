@@ -94,7 +94,7 @@ private struct GameCard: View {
             }
             .frame(height: 118)
             .overlay(alignment: .topTrailing) {
-                CompatibilityBadge(rating: game.compatibilityRating, compact: true)
+                CompatibilityBadge(rating: game.currentRating(from: model.recipe(id: game.recipeID)), compact: true)
                     .padding(8)
             }
 

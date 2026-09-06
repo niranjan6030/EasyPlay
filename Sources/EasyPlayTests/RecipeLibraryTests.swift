@@ -46,6 +46,18 @@ enum RecipeLibraryTests {
             Harness.expect(library.matchRecipe(forInstallerNamed: "SomeUnknownGame.exe") == nil,
                            "an unknown installer matches nothing rather than guessing")
 
+            // A stored rating must not outlive its preset: promoting a preset
+            // from untested to verified has to show up in the library at once.
+            let stale = InstalledGame(title: "7-Zip", bottleID: "b", recipeID: "7-zip",
+                                      executableRelativePath: "x.exe",
+                                      compatibilityRating: .untested)
+            if let current = try? library.recipe(id: "7-zip") {
+                Harness.expect(stale.currentRating(from: current) == current.compatibility.rating,
+                               "the live preset's rating wins over the one stored at install time")
+            }
+            Harness.expect(stale.currentRating(from: nil) == .untested,
+                           "the stored rating remains the fallback when the preset is gone")
+
             for recipe in library.all {
                 Harness.expect(recipe.schemaVersion <= RecipeLibrary.currentSchemaVersion,
                                "\(recipe.id) targets a schema this build understands")

@@ -184,13 +184,24 @@ public struct BottleManager {
 
     // MARK: - Deletion
 
-    /// Deletes a bottle and everything installed inside it.
+    /// Deletes a bottle, everything installed inside it, and the library entries
+    /// that pointed at it.
     ///
     /// Wine's background server holds the prefix open, so it is stopped first —
     /// deleting underneath a live `wineserver` leaves stale processes behind.
-    public func delete(_ bottle: Bottle) throws {
+    ///
+    /// Removing the orphaned library entries is done here rather than in the UI:
+    /// a game whose bottle no longer exists is not a display concern, and a
+    /// front-end that forgot to clean up would leave the library pointing at
+    /// nothing.
+    public func delete(_ bottle: Bottle, store: GameStore = GameStore()) throws {
         let wine = WineRunner(backend: backend, bottle: bottle, runner: runner)
         _ = try? wine.shutdown()
+
+        for game in store.load() where game.bottleID == bottle.id {
+            try store.remove(id: game.id)
+        }
+
         guard fileManager.fileExists(atPath: bottle.url.path) else { return }
         try fileManager.removeItem(at: bottle.url)
     }
