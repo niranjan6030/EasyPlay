@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "id": "unigine-heaven",
+  "title": "Unigine Heaven Benchmark",
+  "installerPatterns": [
+    "unigineheaven",
+    "heaven"
+  ],
+  "publisher": "UNIGINE Company",
+  "compatibility": {
+    "rating": "notSupported",
+    "unsupportedReason": "knownBroken",
+    "lastVerified": "2026-09-07",
+    "source": "Verified failing by EasyPlay on an M4 Mac, Game Porting Toolkit 3.0",
+    "notes": [
+      "Not a game. A free DirectX 11 benchmark, kept as the preset that documents a hard limit of the compatibility engine.",
+      "Heaven 4.0 ships only a 32-bit engine binary, and Apple's D3DMetal is a 64-bit-only library \u2014 there is no 32-bit host-side Direct3D module in Game Porting Toolkit at all. So this title can never reach D3DMetal, whatever the preset asks for.",
+      "Wine does not report that fallback: it serves its OpenGL renderer instead, which reports feature level 10.1 and a GeForce 8800 GTX that does not exist. EasyPlay flags the mismatch before launch rather than letting it look like a preset problem.",
+      "Requires the engine's data-path arguments; the vendor's own heaven.bat goes through a GUI launcher that supplies them."
+    ]
+  },
+  "requires": {
+    "backend": "gamePortingToolkit",
+    "rosetta": true,
+    "diskGB": 3
+  },
+  "bottle": {
+    "windowsVersion": "win10",
+    "architecture": "win64",
+    "retinaMode": true,
+    "dpi": 96
+  },
+  "graphics": {
+    "backend": "wineD3D",
+    "dxvk": {
+      "version": "1.10.3",
+      "async": true,
+      "showHUD": false
+    }
+  },
+  "dllOverrides": {
+    "nvapi": "disabled",
+    "nvapi64": "disabled"
+  },
+  "environment": {
+    "WINEESYNC": "1",
+    "WINEMSYNC": "1",
+    "ROSETTA_ADVERTISE_AVX": "1",
+    "MTL_HUD_ENABLED": "0"
+  },
+  "winetricks": [],
+  "install": {
+    "kind": "installerExecutable",
+    "steamAppID": null,
+    "installerArguments": [
+      "/VERYSILENT",
+      "/SUPPRESSMSGBOXES",
+      "/NORESTART"
+    ],
+    "hints": [
+      "Inno Setup installer, run unattended \u2014 nothing to click."
+    ]
+  },
+  "launch": {
+    "executableGlob": "**/Heaven*.exe",
+    "arguments": [
+      "-video_app",
+      "direct3d11",
+      "-video_mode",
+      "3",
+      "-video_fullscreen",
+      "0",
+      "-video_vsync",
+      "0",
+      "-video_quality",
+      "1",
+      "-sound_app",
+      "null",
+      "-data_path",
+      "../",
+      "-engine_config",
+      "../data/heaven_4.0.cfg",
+      "-system_script",
+      "heaven/unigine.cpp"
+    ],
+    "workingDirectoryFromExecutable": true
+  },
+  "knownIssues": [
+    {
+      "match": "Unhandled page fault",
+      "title": "Heaven crashed while loading its scene",
+      "fix": "The 32-bit engine crashes partway through startup under this Wine build. There is no preset fix \u2014 it is a limitation of running a 2013 32-bit engine on this backend.",
+      "action": null
+    },
+    {
+      "match": "can't initialize filesystem",
+      "title": "Heaven couldn't find its data files",
+      "fix": "The engine was started without its data-path arguments. This preset supplies them; running Heaven.exe by hand will not.",
+      "action": null
+    }
+  ]
+}

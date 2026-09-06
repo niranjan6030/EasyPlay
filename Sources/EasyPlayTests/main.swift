@@ -6,5 +6,7 @@ try ExecutableFinderTests.run()
 try LogClassifierTests.run()
 try RecipeLibraryTests.run()
 try GameStoreTests.run()
+try GraphicsProbeTests.run()
+try WindowsExecutableTests.run()
 
 exit(Harness.summarise())

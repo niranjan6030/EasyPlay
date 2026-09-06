@@ -28,6 +28,14 @@ enum LogClassifierTests {
             Harness.expect(vulkan.first?.remedy == .switchGraphics(.d3dMetal),
                            "a Vulkan failure suggests switching to D3DMetal")
 
+            // Verbatim from a real Heaven run: this Wine build has no Vulkan at
+            // all, and the message arrives on the err:vulkan channel, which an
+            // earlier version of the pattern did not cover.
+            let realVulkanFailure = "0024:err:vulkan:get_vulkan_driver Wine was built without Vulkan support."
+            let vulkanDiagnoses = LogClassifier().classify(log: realVulkanFailure, exitCode: 1)
+            Harness.expect(vulkanDiagnoses.first?.remedy == .switchGraphics(.d3dMetal),
+                           "Wine's real 'built without Vulkan support' message is recognised")
+
             let unknown = LogClassifier().classify(log: "something inscrutable", exitCode: 134)
             Harness.expectEqual(unknown.count, 1, "an unrecognised failure still says something")
             Harness.expectEqual(unknown.first?.id, "unknown-failure", "and is labelled as unrecognised")

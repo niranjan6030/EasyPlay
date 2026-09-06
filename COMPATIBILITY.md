@@ -164,6 +164,56 @@ of the problem.
 
 ---
 
+## The 32-bit wall
+
+The single most important constraint when writing a preset, and the one that is
+invisible until you have already installed the game:
+
+**Apple's D3DMetal is 64-bit only.** In Game Porting Toolkit 3.0:
+
+```
+lib/external/D3DMetal.framework/D3DMetal   x86_64
+lib/external/libd3dshared.dylib            x86_64
+lib/wine/x86_64-unix/d3d11.so              (present)
+lib/wine/i386-unix/                        (does not exist)
+```
+
+There is no 32-bit host-side Direct3D module at all. A 32-bit Windows program
+therefore **cannot** use D3DMetal — or DXVK — no matter what its preset asks
+for. Wine silently serves its own OpenGL renderer instead.
+
+Silently is the problem. A game in this state does not fail; it starts, runs
+badly, and reports hardware that does not exist:
+
+```
+Renderer:           NVIDIA NV50 (Tesla) 4095MB
+Direct3D11 desc:    NVIDIA GeForce 8800 GTX
+Found feature level 10.1
+```
+
+That is wined3d's emulated adapter. Nothing in Wine's log says a fallback
+happened. Someone debugging this would reasonably conclude their preset was
+wrong, and could spend hours on it.
+
+EasyPlay reads the PE header before launching and says so instead:
+
+> **D3DMetal (Apple) can't be used by this program**
+> Unigine Heaven Benchmark is a 32-bit program, and D3DMetal (Apple) only works
+> with 64-bit ones. Wine will fall back to its built-in renderer, which is much
+> slower. This is a limit of the compatibility engine, not something a preset can
+> change.
+
+**So: check the architecture first.** `file "SomeGame.exe"` reporting `PE32
+executable ... Intel 80386` means `graphics.backend` must be `wineD3D`, and the
+game will be slow. `PE32+ ... x86-64` is the case where D3DMetal applies. Nearly
+every game from the last decade is 64-bit; the trap is older titles and
+benchmarks.
+
+Related: this Game Porting Toolkit build has **no Vulkan support whatsoever**
+(`err:vulkan: Wine was built without Vulkan support`), so `dxvk` is not a usable
+option on this backend either. On this stack the real choice is D3DMetal for
+64-bit programs and WineD3D for everything else.
+
 ## Adding a preset
 
 1. **Check it can work at all.** Kernel anti-cheat (Vanguard, EasyAntiCheat,
@@ -217,4 +267,5 @@ of the problem.
 | `ride-4` | Runs Great (from CrossOver's database) | The reference implementation. |
 | `winemine` | Runs Great (verified locally) | Wine's own Minesweeper. Confirms a bottle can run Windows programs before you commit to a long download. |
 | `7-zip` | Runs Great (verified locally) | A real Windows installer, small and free — the installer-flow smoke test. Verified end to end. |
+| `unigine-heaven` | Not Supported (verified failing) | A 32-bit DirectX 11 benchmark. Kept as the worked example of the 32-bit wall above — and of a title that fails for architectural reasons rather than policy ones. |
 | `valorant` | Not Supported | Demonstrates refusing a game properly, with a reason. |

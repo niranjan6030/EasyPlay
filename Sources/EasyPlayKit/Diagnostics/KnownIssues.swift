@@ -92,9 +92,9 @@ enum GlobalKnownIssues {
         ),
         Pattern(
             id: "no-vulkan",
-            regex: #"err:winediag:.*[Vv]ulkan|vulkan-1\.dll.*not found"#,
+            regex: #"err:(winediag|vulkan):.*[Vv]ulkan|[Ww]ine was built without Vulkan|vulkan-1\.dll.*not found"#,
             title: "Vulkan isn't available",
-            explanation: "DXVK needs Vulkan, which isn't working on this Mac. D3DMetal talks to Metal directly and doesn't need Vulkan.",
+            explanation: "DXVK needs Vulkan, and this Wine build has no Vulkan support at all. D3DMetal talks to Metal directly and doesn't need Vulkan, so use that instead.",
             action: "graphics:d3dMetal"
         ),
         Pattern(

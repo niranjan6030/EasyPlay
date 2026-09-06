@@ -29,6 +29,9 @@ func printUsage() {
                                    Run a Windows installer inside a bottle
       easyplay play <game-id> [--seconds <n>]
                                    Launch an installed game
+      easyplay probe <game-id> [--seconds <n>]
+                                   Launch a game and report which graphics
+                                   translator it is really using
 
     """)
 }
@@ -430,6 +433,95 @@ func playGame(_ arguments: [String]) -> Int32 {
     }
 }
 
+/// Launches a game and, while it is running, inspects it to find out which
+/// graphics translator actually loaded. Configuring D3DMetal and *getting*
+/// D3DMetal are different things, and only this tells them apart.
+func probeGame(_ arguments: [String]) -> Int32 {
+    guard let gameID = arguments.first else {
+        print("Usage: easyplay probe <game-id> [--seconds <n>]")
+        return 1
+    }
+    guard let backend = resolveBackend() else { return 1 }
+    guard let game = GameStore().load().first(where: { $0.id == gameID }) else {
+        print("\(Colour.red)No game with ID '\(gameID)'.\(Colour.reset)")
+        return 1
+    }
+
+    let seconds = value(of: "--seconds", in: arguments).flatMap(Double.init) ?? 25
+    let executableName = (game.executableRelativePath as NSString).lastPathComponent
+
+    do {
+        let bottle = try BottleManager(backend: backend).bottle(id: game.bottleID)
+        let recipe = game.recipeID.flatMap { try? RecipeLibrary().recipe(id: $0) }
+
+        print("\nLaunching \(Colour.bold)\(game.title)\(Colour.reset) and watching what it loads…")
+        if let recipe {
+            print("  Preset asks for: \(Colour.bold)\(recipe.graphics.backend.displayName)\(Colour.reset)\n")
+        }
+
+        // The launch blocks until the game exits, so it runs on another thread
+        // while this one waits for the process to appear and then inspects it.
+        let launcher = GameLauncher(backend: backend)
+        DispatchQueue.global().async {
+            _ = try? launcher.launch(game, in: bottle, recipe: recipe, timeout: seconds)
+        }
+
+        let probe = GraphicsProbe()
+        var report: GraphicsProbe.Report?
+
+        // Give the game time to create its device; a renderer does not load its
+        // graphics stack the instant the process starts.
+        var everSawProcess = false
+        for attempt in 1...Int(seconds) {
+            Thread.sleep(forTimeInterval: 1)
+            let candidate = probe.probe(executableNamed: executableName)
+            if !candidate.processIDs.isEmpty { everSawProcess = true }
+            if candidate.translator != nil {
+                report = candidate
+                print("  Detected after \(attempt)s.\n")
+                break
+            }
+            // Only give up early if the game never started at all. A large game
+            // can take a long time to reach the point of creating its device,
+            // and bailing out at a fixed few seconds reports a false negative.
+            if !everSawProcess && attempt >= Int(seconds) / 2 {
+                print("  \(Colour.yellow)The program never started.\(Colour.reset)\n")
+                break
+            }
+        }
+
+        let final = report ?? probe.probe(executableNamed: executableName)
+
+        print("  \(Colour.bold)Actually using:\(Colour.reset) \(final.summary)")
+        if let driver = final.gpuDriver {
+            print("  \(Colour.bold)GPU driver:\(Colour.reset) \(driver)")
+        }
+        if !final.processIDs.isEmpty {
+            print("  \(Colour.dim)Processes inspected: \(final.processIDs.map(String.init).joined(separator: ", "))\(Colour.reset)")
+        }
+        if !final.evidence.isEmpty {
+            print("\n  \(Colour.bold)Evidence\(Colour.reset)")
+            final.evidence.forEach { print("    \(Colour.dim)\($0)\(Colour.reset)") }
+        }
+
+        let matched = final.translator == recipe?.graphics.backend
+        print("")
+        if final.translator == nil {
+            print("  \(Colour.red)No translator detected — the game may not have started rendering.\(Colour.reset)\n")
+            return 1
+        }
+        if matched {
+            print("  \(Colour.green)Matches the preset.\(Colour.reset)\n")
+        } else {
+            print("  \(Colour.yellow)Does not match the preset — Wine fell back to something else.\(Colour.reset)\n")
+        }
+        return matched ? 0 : 1
+    } catch {
+        print("\(Colour.red)\(error.localizedDescription)\(Colour.reset)")
+        return 1
+    }
+}
+
 // MARK: - Dispatch
 
 let exitCode: Int32
@@ -452,6 +544,8 @@ case "install":
     exitCode = installGame(Array(arguments.dropFirst()))
 case "play":
     exitCode = playGame(Array(arguments.dropFirst()))
+case "probe":
+    exitCode = probeGame(Array(arguments.dropFirst()))
 case nil, "help", "-h", "--help":
     printUsage()
     exitCode = 0

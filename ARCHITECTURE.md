@@ -164,6 +164,27 @@ precisely the failure a second front-end exists to expose, and the fix moved the
 cascade into the engine and added `GameStore.pruneOrphans` so the library also
 heals when a bottle disappears outside EasyPlay entirely.
 
+### Reading the PE header before trusting the preset
+
+The graphics section above describes choosing a translator. It omits the thing
+that turned out to matter more: whether the chosen translator is *possible*.
+
+D3DMetal ships as an x86_64-only framework, and Game Porting Toolkit has no
+32-bit host-side Direct3D module at all. A 32-bit game asking for D3DMetal does
+not get an error — it gets Wine's OpenGL renderer, a fabricated GeForce 8800 GTX,
+feature level 10.1, and a preset that looks wrong when it is not.
+
+This was found the expensive way: by downloading a 260 MB DirectX 11 benchmark to
+prove the D3DMetal path, and discovering its engine is 32-bit. That experience is
+now encoded three ways — `WindowsExecutable.architecture(of:)` parses the COFF
+machine field straight from the file, `WineBackend.supports(_:for:)` states the
+rule, and `GameLauncher.preflight` turns a violation into a plain-English warning
+before the game runs. A wasted afternoon became a check that costs microseconds.
+
+It also produced the sharpest illustration of what this project is. Wine had all
+the information needed to explain this and chose not to surface it. That gap —
+between what the tool knows and what the user is told — is the entire product.
+
 ### Not sandboxed, and it can't be
 
 EasyPlay's purpose is executing arbitrary third-party binaries from arbitrary

@@ -50,6 +50,8 @@ public struct GameLauncher {
             ? executable.deletingLastPathComponent()
             : nil
 
+        let preflight = self.preflight(executable: executable, recipe: recipe)
+
         let arguments = [executable.path] + (recipe?.launch.arguments ?? [])
 
         let result: CommandResult
@@ -59,20 +61,43 @@ public struct GameLauncher {
                                   onOutput: onOutput)
         } catch ProcessError.timedOut {
             // Hitting the timeout means the program was still running, which for
-            // a bottle check is the successful outcome.
+            // a bottle check is the successful outcome. Pre-flight warnings still
+            // apply, though — a game that runs on the wrong renderer runs badly
+            // rather than failing, which is exactly when saying so matters most.
             try? store.update(id: game.id) { $0.lastPlayedAt = Date() }
             _ = try? wine.shutdown()
-            return LaunchOutcome(game: game, exitCode: 0, logURL: nil, diagnoses: [])
+            return LaunchOutcome(game: game, exitCode: 0, logURL: nil, diagnoses: preflight)
         }
 
         try? store.update(id: game.id) { $0.lastPlayedAt = Date() }
 
-        let diagnoses = LogClassifier(recipe: recipe)
+        let diagnoses = preflight + LogClassifier(recipe: recipe)
             .classify(log: result.combinedOutput, exitCode: result.exitCode)
 
         let logURL = try? writeLog(result.combinedOutput, bottle: bottle)
         return LaunchOutcome(game: game, exitCode: result.exitCode,
                              logURL: logURL, diagnoses: diagnoses)
+    }
+
+    /// Checks that can be made before the game runs at all.
+    ///
+    /// Wine will happily start a 32-bit game whose preset asks for D3DMetal and
+    /// quietly serve it the OpenGL renderer instead. The game then runs badly and
+    /// reports a graphics card that does not exist, which is impossible to
+    /// diagnose from the log. Saying so up front is the whole point of EasyPlay.
+    public func preflight(executable: URL, recipe: Recipe?) -> [Diagnosis] {
+        guard let recipe else { return [] }
+        let architecture = WindowsExecutable.architecture(of: executable)
+        let wanted = recipe.graphics.backend
+        guard !backend.supports(wanted, for: architecture) else { return [] }
+
+        return [Diagnosis(
+            id: "translator-architecture-mismatch",
+            title: "\(wanted.displayName) can't be used by this program",
+            explanation: "\(recipe.title) is a \(architecture.displayName) program, and \(wanted.displayName) only works with 64-bit ones. Wine will fall back to its built-in renderer, which is much slower. This is a limit of the compatibility engine, not something a preset can change.",
+            remedy: .switchGraphics(.wineD3D),
+            evidence: "\(executable.lastPathComponent) is \(architecture.displayName) (PE machine type \(architecture.rawValue))"
+        )]
     }
 
     private func writeLog(_ contents: String, bottle: Bottle) throws -> URL {
