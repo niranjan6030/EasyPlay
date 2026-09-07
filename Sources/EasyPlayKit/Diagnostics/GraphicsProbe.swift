@@ -22,11 +22,17 @@ public struct GraphicsProbe {
         /// The matched libraries, as evidence.
         public let evidence: [String]
 
+        /// True once the whole chain is up: a translator *and* the GPU driver.
+        /// Until then the picture is still forming and worth waiting for.
+        public var isComplete: Bool { translator != nil && usingMetal }
+
         public var summary: String {
             guard let translator else {
                 return "No DirectX translation layer detected in the running process."
             }
-            let metal = usingMetal ? ", rendering through Metal" : ", but Metal is not loaded"
+            let metal = usingMetal
+                ? ", rendering through Metal on \(gpuDriver ?? "the GPU")"
+                : ", but the GPU driver has not loaded yet"
             return "\(translator.displayName)\(metal)."
         }
     }
@@ -76,9 +82,12 @@ public struct GraphicsProbe {
             libraries.filter { $0.localizedCaseInsensitiveContains(needle) }.sorted()
         }
 
-        let d3dMetal = matches("D3DMetal") + matches("libd3dshared")
+        let d3dMetal = matches("D3DMetal") + matches("libd3dshared") + matches("metalirconverter")
         let dxvk = matches("dxvk") + matches("libMoltenVK") + matches("libvulkan")
-        let metal = matches("/Metal.framework/") + matches("MetalPerformance")
+        // Apple's own Metal.framework lives in the dyld shared cache and never
+        // appears as a mapped file, so the GPU driver bundle is the reliable
+        // signal that Metal is actually driving the GPU.
+        let metal = matches("AGXMetal") + matches("metallib") + matches("/Metal.framework/")
         let driver = matches("AGXMetal").first ?? matches("AppleIntelGraphics").first
 
         let translator: GraphicsBackend?
@@ -97,7 +106,7 @@ public struct GraphicsProbe {
             usingMetal: !metal.isEmpty || driver != nil,
             gpuDriver: driver.map { URL(fileURLWithPath: $0).lastPathComponent },
             processIDs: pids,
-            evidence: Array((d3dMetal + dxvk + metal).prefix(12))
+            evidence: Array(Set(d3dMetal + dxvk + metal)).sorted().prefix(12).map { $0 }
         )
     }
 }

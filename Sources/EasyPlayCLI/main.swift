@@ -476,10 +476,15 @@ func probeGame(_ arguments: [String]) -> Int32 {
             Thread.sleep(forTimeInterval: 1)
             let candidate = probe.probe(executableNamed: executableName)
             if !candidate.processIDs.isEmpty { everSawProcess = true }
+            // Keep the best picture so far, but keep watching: a translator
+            // loads seconds before the GPU driver does, and stopping at the
+            // first match reports a half-formed answer as if it were final.
             if candidate.translator != nil {
                 report = candidate
-                print("  Detected after \(attempt)s.\n")
-                break
+                if candidate.isComplete {
+                    print("  Fully resolved after \(attempt)s.\n")
+                    break
+                }
             }
             // Only give up early if the game never started at all. A large game
             // can take a long time to reach the point of creating its device,

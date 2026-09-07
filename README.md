@@ -27,6 +27,7 @@ you what broke in a sentence instead of handing you 400 lines of `err:module:`.
 | **Launches games** | One button. All the Wine configuration was applied earlier. |
 | **Explains failures** | Wine's output is pattern-matched against known problems and rendered as plain English with a fix button where one exists. |
 | **Rates compatibility** | Runs Great / Runs OK / Untested / Not Supported, per preset, with the source of the rating. |
+| **Proves the graphics path** | `easyplay probe` inspects a running game and reports which translator it is *really* using — Wine falls back silently, and a game on the wrong renderer runs badly rather than failing. |
 
 ## What it deliberately does not do
 
@@ -111,7 +112,13 @@ Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
   configured, the installer run silently under Wine, the resulting `7zFM.exe`
   located by glob, and the program launched and confirmed running as a live
   `wine64` process before being shut down cleanly
-- 61 unit checks across the environment builder, glob matcher, log classifier
+- **The DirectX 11 path, proven end to end**: a 64-bit DX11 benchmark launched
+  through EasyPlay maps `D3DMetal.framework`, `libmetalirconverter` (DXIL to
+  Metal IR shader conversion) and the `AGXMetalG16G` Apple GPU driver — DirectX
+  11 reaching an M4 GPU through Metal. `easyplay probe <game-id>` reports this
+  for any game, so "configured for D3DMetal" and "actually using D3DMetal" can
+  be told apart
+- 83 unit checks across the environment builder, glob matcher, log classifier
   and preset loader — including a regression case built from the real install
   log, asserting that Wine's harmless shortcut-builder errors raise no false
   alarm

@@ -203,6 +203,21 @@ EasyPlay reads the PE header before launching and says so instead:
 > slower. This is a limit of the compatibility engine, not something a preset can
 > change.
 
+### Telling the two apart at a glance
+
+The renderer a title reports is the quickest tell:
+
+| | 32-bit, fell back to wined3d | 64-bit, using D3DMetal |
+|---|---|---|
+| Adapter name | `NVIDIA GeForce 8800 GTX` | `AMD Compatibility Mode` |
+| Video memory | 4095 MB (invented) | the Mac's real unified memory |
+| Feature level | 10.1 | 11+ |
+
+Both names are fictional — neither GPU is in the machine — but they are fictional
+in different, recognisable ways. `EasyPlay probe <game-id>` answers the same
+question directly, by listing the graphics libraries the running process has
+actually loaded.
+
 **So: check the architecture first.** `file "SomeGame.exe"` reporting `PE32
 executable ... Intel 80386` means `graphics.backend` must be `wineD3D`, and the
 game will be slow. `PE32+ ... x86-64` is the case where D3DMetal applies. Nearly
@@ -267,5 +282,6 @@ option on this backend either. On this stack the real choice is D3DMetal for
 | `ride-4` | Runs Great (from CrossOver's database) | The reference implementation. |
 | `winemine` | Runs Great (verified locally) | Wine's own Minesweeper. Confirms a bottle can run Windows programs before you commit to a long download. |
 | `7-zip` | Runs Great (verified locally) | A real Windows installer, small and free — the installer-flow smoke test. Verified end to end. |
+| `unigine-superposition` | Runs Great (verified locally) | A 64-bit DirectX 11 benchmark. The proof that the DirectX-to-Metal path works: the live process maps D3DMetal, the DXIL-to-Metal-IR shader converter, and the Apple GPU driver. |
 | `unigine-heaven` | Not Supported (verified failing) | A 32-bit DirectX 11 benchmark. Kept as the worked example of the 32-bit wall above — and of a title that fails for architectural reasons rather than policy ones. |
 | `valorant` | Not Supported | Demonstrates refusing a game properly, with a reason. |

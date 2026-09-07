@@ -66,7 +66,11 @@ enum WindowsExecutableTests {
             // And the preflight turns that into something a user can read.
             let launcher = GameLauncher(backend: gptk)
             let x86Again = directory.appendingPathComponent("game32.exe")
-            if let recipe = try? RecipeLibrary().recipe(id: "unigine-heaven") {
+            // Superposition's preset asks for D3DMetal; pairing it with a 32-bit
+            // executable is exactly the impossible combination to catch. (Heaven's
+            // preset is no longer suitable here: it was corrected to WineD3D once
+            // its engine turned out to be 32-bit.)
+            if let recipe = try? RecipeLibrary().recipe(id: "unigine-superposition") {
                 let diagnoses = launcher.preflight(executable: x86Again, recipe: recipe)
                 Harness.expectEqual(diagnoses.count, 1,
                                     "a 32-bit program asking for D3DMetal is flagged before launch")

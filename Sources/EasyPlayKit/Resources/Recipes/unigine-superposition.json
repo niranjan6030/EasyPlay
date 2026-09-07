@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "unigine-superposition",
+  "title": "Unigine Superposition Benchmark",
+  "installerPatterns": [
+    "uniginesuperposition",
+    "superposition"
+  ],
+  "publisher": "UNIGINE Company",
+  "compatibility": {
+    "rating": "runsGreat",
+    "unsupportedReason": null,
+    "lastVerified": "2026-09-07",
+    "source": "Verified by EasyPlay on an M4 Mac, Game Porting Toolkit 3.0",
+    "notes": [
+      "Not a game. A free 64-bit DirectX 11 benchmark, used to prove the DirectX-to-Metal path actually engages.",
+      "Verified 2026-09-07: the running process maps D3DMetal.framework, libmetalirconverter (DXIL to Metal IR shader conversion) and the AGXMetalG16G Apple GPU driver. DirectX 11 reaches the M4 GPU through Metal.",
+      "Superposition's own log reports the adapter as 'AMD Compatibility Mode' with 18186 MB of video memory - D3DMetal exposing the Mac's unified memory. The contrast with a wined3d fallback, which invents an 'NVIDIA GeForce 8800 GTX' with 4095 MB, is the quickest way to tell the two apart.",
+      "Chosen specifically because it is 64-bit: its predecessor Heaven 4.0 ships a 32-bit engine and therefore can never reach D3DMetal."
+    ]
+  },
+  "requires": {
+    "backend": "gamePortingToolkit",
+    "rosetta": true,
+    "diskGB": 8
+  },
+  "bottle": {
+    "windowsVersion": "win10",
+    "architecture": "win64",
+    "retinaMode": true,
+    "dpi": 96
+  },
+  "graphics": {
+    "backend": "d3dMetal",
+    "dxvk": null
+  },
+  "dllOverrides": {
+    "d3d11": "builtin",
+    "d3d10core": "builtin",
+    "dxgi": "builtin",
+    "nvapi": "disabled",
+    "nvapi64": "disabled"
+  },
+  "environment": {
+    "WINEESYNC": "1",
+    "WINEMSYNC": "1",
+    "ROSETTA_ADVERTISE_AVX": "1",
+    "MTL_HUD_ENABLED": "0"
+  },
+  "winetricks": [],
+  "install": {
+    "kind": "installerExecutable",
+    "steamAppID": null,
+    "installerArguments": [
+      "/VERYSILENT",
+      "/SUPPRESSMSGBOXES",
+      "/NORESTART"
+    ],
+    "hints": [
+      "Inno Setup installer, run unattended. About 4 GB once installed."
+    ]
+  },
+  "launch": {
+    "executableGlob": "**/bin/superposition.exe",
+    "arguments": [
+      "-video_app",
+      "direct3d11",
+      "-video_fullscreen",
+      "0",
+      "-sound_app",
+      "null"
+    ],
+    "workingDirectoryFromExecutable": true
+  },
+  "knownIssues": [
+    {
+      "match": "err:d3d.*(no adapters|failed to create device)",
+      "title": "DirectX 11 device couldn't be created",
+      "fix": "The DirectX-to-Metal layer didn't start. Check that this bottle uses the Game Porting Toolkit engine.",
+      "action": "graphics:wineD3D"
+    }
+  ]
+}
