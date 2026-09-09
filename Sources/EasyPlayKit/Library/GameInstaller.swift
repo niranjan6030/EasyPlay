@@ -69,8 +69,19 @@ public struct GameInstaller {
         let wine = WineRunner(backend: backend, bottle: bottle, runner: runner)
         let gameTitle = title ?? recipe?.title ?? installerURL.deletingPathExtension().lastPathComponent
 
-        onProgress?("Running the \(gameTitle) installer…")
+        let isSilent = !(recipe?.install.installerArguments ?? []).isEmpty
+        if isSilent {
+            onProgress?("Running the \(gameTitle) installer…")
+        } else {
+            // Most installers are wizards. Nothing previously said so, which
+            // made an on-screen installer look like EasyPlay hanging.
+            onProgress?("The \(gameTitle) installer is now on screen — follow its steps.")
+            onProgress?("EasyPlay carries on once the installer closes.")
+        }
 
+        // Everything the installer writes is newer than this, which is how a
+        // game gets told apart from the Windows files already in the bottle.
+        let startedAt = Date()
         let arguments = [installerURL.path] + (recipe?.install.installerArguments ?? [])
         let result = try wine.run(arguments, recipe: recipe, verbosity: .diagnostic,
                                   timeout: 7200, onOutput: nil)
@@ -81,12 +92,21 @@ public struct GameInstaller {
         // Installers frequently exit non-zero and still succeed, so the exit code
         // alone doesn't decide the outcome — finding the executable does.
         let glob = recipe?.launch.executableGlob ?? "**/*.exe"
-        guard let executable = ExecutableFinder().find(glob: glob, in: bottle) else {
-            let diagnoses = LogClassifier(recipe: recipe)
+        guard let executable = ExecutableFinder().find(glob: glob, in: bottle,
+                                                       installedAfter: startedAt) else {
+            var diagnoses = LogClassifier(recipe: recipe)
                 .classify(log: result.combinedOutput, exitCode: result.exitCode)
-            if diagnoses.isEmpty {
-                throw InstallError.executableNotFound(glob: glob)
-            }
+
+            // Nothing new on disk means the installer never got as far as
+            // installing — cancelled, crashed, or refused to run.
+            diagnoses.insert(Diagnosis(
+                id: "installer-produced-nothing",
+                title: "The installer closed without installing anything",
+                explanation: "\(gameTitle) isn't in this bottle: the installer ran but left no program behind. That usually means it was cancelled or closed early, or it needs a Windows component this bottle doesn't have yet. The bottle is still here, so you can try the installer again.",
+                remedy: nil,
+                evidence: LogClassifier.interestingLines(from: result.combinedOutput).joined(separator: "\n")
+            ), at: 0)
+
             throw InstallError.installerFailed(log: result.combinedOutput, diagnoses: diagnoses)
         }
 
@@ -154,7 +174,7 @@ public struct GameInstaller {
         // several games can't return the wrong executable.
         let finder = ExecutableFinder()
         let executable = finder.find(glob: recipe.launch.executableGlob, in: bottle)
-        guard let executable else {
+        guard let executable else {  // Steam recipes carry a specific glob, so no date filter is needed
             throw InstallError.executableNotFound(glob: recipe.launch.executableGlob)
         }
 

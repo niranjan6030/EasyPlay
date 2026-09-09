@@ -188,7 +188,7 @@ Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
   macOS build, 27 blocked by kernel anti-cheat, the rest with no known blocker.
   Native-Mac status is verified against Steam's platform data rather than
   asserted
-- 276 unit checks across the environment builder, glob matcher, log classifier
+- 281 unit checks across the environment builder, glob matcher, log classifier
   and preset loader — including a regression case built from the real install
   log, asserting that Wine's harmless shortcut-builder errors raise no false
   alarm
@@ -209,6 +209,9 @@ Known gaps, stated rather than buried:
   Vulkan at all, so D3DMetal is the right choice anyway.
 - Two diagnostic remedies (`steam:start`, `bottle:recreate`) are recognised and
   explained but not automated.
+- Wizard-style installers work, but EasyPlay only watches for the game they
+  leave behind — it can't drive the wizard for you, and a repack or installer
+  that needs Windows components the bottle lacks will still fail.
 
 Not yet verified end to end: the RIDE 4 preset itself. Its rating is inherited
 from CrossOver's published compatibility database, not from a local run — the

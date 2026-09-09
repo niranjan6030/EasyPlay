@@ -12,26 +12,45 @@ public struct ExecutableFinder {
         self.fileManager = fileManager
     }
 
+    /// Windows' own programs. A bottle contains dozens of these from the moment
+    /// it is created, and none of them is ever the game the user installed.
+    private static let systemDirectories = ["/windows/"]
+
+    /// Executables installers routinely leave beside a game.
+    private static let notAGame = [
+        "unins", "uninstall", "setup", "vcredist", "vc_redist", "dxsetup",
+        "dotnetfx", "directx", "crashreport", "crashhandler", "cefprocess",
+        "installer", "redist", "helper",
+    ]
+
     /// Finds the executable matching `glob` under a bottle's C: drive.
     ///
     /// When several files match, the largest wins. Games routinely ship small
     /// launcher and crash-handler executables beside the real one, and the real
     /// one is almost always the biggest.
-    public func find(glob: String, in bottle: Bottle) -> URL? {
-        candidates(glob: glob, in: bottle)
+    ///
+    /// `installedAfter` is what stops a failed install registering nonsense. A
+    /// bottle is full of Windows' own executables, so a broad glob like
+    /// `**/*.exe` would otherwise happily pick `cmd.exe` as "the game" when an
+    /// installer produced nothing at all.
+    public func find(glob: String, in bottle: Bottle, installedAfter: Date? = nil) -> URL? {
+        candidates(glob: glob, in: bottle, installedAfter: installedAfter)
             .max { size(of: $0) < size(of: $1) }
     }
 
-    public func candidates(glob: String, in bottle: Bottle) -> [URL] {
+    public func candidates(glob: String, in bottle: Bottle, installedAfter: Date? = nil) -> [URL] {
         guard let regex = Self.regex(forGlob: glob),
               let enumerator = fileManager.enumerator(
                   at: bottle.driveC,
-                  includingPropertiesForKeys: [.isRegularFileKey, .totalFileAllocatedSizeKey],
+                  includingPropertiesForKeys: [.isRegularFileKey, .totalFileAllocatedSizeKey,
+                                               .contentModificationDateKey, .creationDateKey],
                   options: [.skipsHiddenFiles]) else { return [] }
 
         var matches: [URL] = []
         for case let fileURL as URL in enumerator {
             guard fileURL.pathExtension.lowercased() == "exe" else { continue }
+            guard !isSystemOrSupportExecutable(fileURL, in: bottle) else { continue }
+            if let installedAfter, !wasWritten(fileURL, after: installedAfter) { continue }
             // Match against the Windows-side path so globs in presets read the
             // way a Windows user would write them.
             let relativePath = fileURL.path
@@ -43,6 +62,29 @@ public struct ExecutableFinder {
             }
         }
         return matches
+    }
+
+    /// Windows' own programs, and the uninstallers and runtime bundles an
+    /// installer drops next to the game.
+    private func isSystemOrSupportExecutable(_ url: URL, in bottle: Bottle) -> Bool {
+        let relative = url.path
+            .replacingOccurrences(of: bottle.driveC.path, with: "")
+            .lowercased()
+        if Self.systemDirectories.contains(where: { relative.hasPrefix($0) }) { return true }
+
+        let name = url.deletingPathExtension().lastPathComponent.lowercased()
+        return Self.notAGame.contains { name.hasPrefix($0) }
+    }
+
+    /// Was this file written by the install we just ran?
+    ///
+    /// A second of slack, because a file copied by an installer can carry a
+    /// timestamp fractionally before the moment we started watching.
+    private func wasWritten(_ url: URL, after date: Date) -> Bool {
+        let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .creationDateKey])
+        let modified = values?.contentModificationDate ?? .distantPast
+        let created = values?.creationDate ?? .distantPast
+        return max(modified, created) >= date.addingTimeInterval(-1)
     }
 
     private func size(of url: URL) -> Int {
