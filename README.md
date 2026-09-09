@@ -19,6 +19,17 @@ you what broke in a sentence instead of handing you 400 lines of `err:module:`.
 ## What it looks like
 
 <p align="center">
+  <img src="docs/screenshots/demo.gif" alt="EasyPlay in use: the guide, asking whether two games run, the library, the install sheet with the RIDE 4 Steam preset, and the setup check" width="820">
+</p>
+
+Forty seconds, recorded from the running app: ask whether ELDEN RING runs (it
+can't — kernel anti-cheat) and whether Baldur's Gate 3 does (buy the Mac
+version), then the library, the install sheet applying the RIDE 4 preset, the
+bottle behind it, and the environment check. Re-recordable with
+[`Scripts/record-demo.sh`](Scripts/record-demo.sh), which drives the real app
+rather than staging anything.
+
+<p align="center">
   <img src="docs/screenshots/guide.png" alt="The How to use EasyPlay screen: six numbered steps, and a panel listing what EasyPlay cannot do" width="720">
 </p>
 
