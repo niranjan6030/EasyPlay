@@ -16,6 +16,36 @@ you what broke in a sentence instead of handing you 400 lines of `err:module:`.
 
 ---
 
+## What it looks like
+
+<p align="center">
+  <img src="docs/screenshots/library.png" alt="EasyPlay's library: game cards with compatibility badges and a Play button" width="820">
+</p>
+
+The library. Two installed programs, each with a compatibility badge and one
+button. Everything Wine needs — the prefix, the DLL overrides, the environment —
+was applied when they were installed.
+
+<p align="center">
+  <img src="docs/screenshots/install.png" alt="The install sheet showing the RIDE 4 preset, its Runs Great badge and its configuration" width="820">
+</p>
+
+The guided install, with the RIDE 4 preset selected. The preset is chosen
+automatically when the installer's filename is recognised, and it is shown rather
+than hidden: the rating, where that rating came from, the Windows version, the
+graphics translator and the disk it needs are all on screen before anything is
+written to your Mac.
+
+<p align="center">
+  <img src="docs/screenshots/setup.png" alt="The setup screen listing Rosetta, Homebrew, the Wine engine, Winetricks and free space" width="820">
+</p>
+
+Setup. Every dependency is checked, and anything missing comes with a plain
+explanation and the exact command — which you can copy and run yourself instead
+of pressing the button.
+
+---
+
 ## What it does
 
 | | |
