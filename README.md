@@ -19,6 +19,17 @@ you what broke in a sentence instead of handing you 400 lines of `err:module:`.
 ## What it looks like
 
 <p align="center">
+  <img src="docs/screenshots/guide.png" alt="The How to use EasyPlay screen: six numbered steps, and a panel listing what EasyPlay cannot do" width="720">
+</p>
+
+The instructions live in the app, not just in this README — this screen opens on
+first run. Six steps from setup to pressing Play, each with a button that takes
+you there, and a panel stating plainly what EasyPlay **can't** do: kernel
+anti-cheat, signing in to Steam for you, supplying games, or promising that an
+untested game works. A user who hits an undocumented limit assumes the app is
+broken.
+
+<p align="center">
   <img src="docs/screenshots/ask.png" alt="The Ask screen answering whether Elden Ring and Baldur's Gate 3 run on a Mac" width="820">
 </p>
 
