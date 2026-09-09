@@ -1,205 +1,2325 @@
 {
   "schemaVersion": 1,
   "lastReviewed": "2026-09-09",
-  "disclaimer": "Anti-cheat systems and native-Mac availability change over time. Every entry records when it was last reviewed and where the claim comes from. EasyPlay never invents a rating: a game with no known blocker is reported as untested, not as working.",
+  "disclaimer": "Anti-cheat systems and native-Mac availability change over time. Every entry records when it was last reviewed and where the claim comes from. Native-Mac status is verified against Steam's own platform data where the game is sold there; note that Steam only knows about Steam, so a few titles ship Mac versions through the Mac App Store instead. EasyPlay never invents a rating: a game with no known blocker is reported as untested, not as working.",
   "entries": [
-    { "id": "valorant", "title": "VALORANT", "aliases": ["valo"], "publisher": "Riot Games",
-      "store": { "kind": "publisher", "id": null, "url": "https://playvalorant.com" },
-      "macNative": false, "antiCheat": "vanguard", "graphicsAPI": ["DirectX 11"], "presetID": "valorant",
-      "verdict": "notSupported", "source": "Riot Vanguard is publicly documented as a kernel driver",
-      "lastReviewed": "2026-09-09", "notes": ["Riot has stated Vanguard will not support emulation or virtualisation."] },
-
-    { "id": "league-of-legends", "title": "League of Legends", "aliases": ["lol", "league"], "publisher": "Riot Games",
-      "store": { "kind": "publisher", "id": null, "url": "https://www.leagueoflegends.com" },
-      "macNative": true, "antiCheat": "vanguard", "graphicsAPI": ["DirectX 11"], "presetID": null,
-      "verdict": "notSupported", "source": "Riot Vanguard is publicly documented as a kernel driver",
-      "lastReviewed": "2026-09-09", "notes": ["Riot ships an official macOS client - use that rather than Wine."] },
-
-    { "id": "fortnite", "title": "Fortnite", "aliases": [], "publisher": "Epic Games",
-      "store": { "kind": "epic", "id": "fortnite", "url": "https://www.fortnite.com" },
-      "macNative": false, "antiCheat": "easyAntiCheat", "graphicsAPI": ["DirectX 11", "DirectX 12"], "presetID": null,
-      "verdict": "notSupported", "source": "Epic publicly documents Easy Anti-Cheat on Fortnite",
-      "lastReviewed": "2026-09-09", "notes": ["Epic withdrew macOS support for Battle Royale in 2020."] },
-
-    { "id": "apex-legends", "title": "Apex Legends", "aliases": ["apex"], "publisher": "Electronic Arts",
-      "store": { "kind": "steam", "id": "1172470", "url": null },
-      "macNative": false, "antiCheat": "easyAntiCheat", "graphicsAPI": ["DirectX 11"], "presetID": null,
-      "verdict": "notSupported", "source": "EA publicly documents Easy Anti-Cheat on Apex Legends",
-      "lastReviewed": "2026-09-09", "notes": ["EA ended Steam Deck and Linux support in 2024 over anti-cheat."] },
-
-    { "id": "destiny-2", "title": "Destiny 2", "aliases": ["destiny2", "d2"], "publisher": "Bungie",
-      "store": { "kind": "steam", "id": "1085660", "url": null },
-      "macNative": false, "antiCheat": "battlEye", "graphicsAPI": ["DirectX 11", "DirectX 12"], "presetID": null,
-      "verdict": "notSupported", "source": "Bungie publicly documents BattlEye on Destiny 2",
-      "lastReviewed": "2026-09-09", "notes": ["Bungie has stated that playing via emulation risks a ban."] },
-
-    { "id": "rainbow-six-siege", "title": "Tom Clancy's Rainbow Six Siege", "aliases": ["r6", "siege", "rainbow six"], "publisher": "Ubisoft",
-      "store": { "kind": "steam", "id": "359550", "url": null },
-      "macNative": false, "antiCheat": "battlEye", "graphicsAPI": ["DirectX 11", "Vulkan"], "presetID": null,
-      "verdict": "notSupported", "source": "Ubisoft publicly documents BattlEye on Siege",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "pubg", "title": "PUBG: BATTLEGROUNDS", "aliases": ["pubg", "playerunknowns battlegrounds"], "publisher": "KRAFTON",
-      "store": { "kind": "steam", "id": "578080", "url": null },
-      "macNative": false, "antiCheat": "battlEye", "graphicsAPI": ["DirectX 11"], "presetID": null,
-      "verdict": "notSupported", "source": "KRAFTON publicly documents BattlEye on PUBG",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "elden-ring", "title": "ELDEN RING", "aliases": ["eldenring"], "publisher": "FromSoftware",
-      "store": { "kind": "steam", "id": "1245620", "url": null },
-      "macNative": false, "antiCheat": "easyAntiCheat", "graphicsAPI": ["DirectX 12"], "presetID": null,
-      "verdict": "notSupported", "source": "FromSoftware ships Easy Anti-Cheat with ELDEN RING",
+    {
+      "id": "alien-isolation",
+      "title": "Alien: Isolation",
+      "aliases": [
+        "alien"
+      ],
+      "publisher": "SEGA",
+      "store": {
+        "kind": "steam",
+        "id": "214490",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
       "lastReviewed": "2026-09-09",
-      "notes": ["It runs on Steam Deck because Easy Anti-Cheat has an opt-in Proton mode for Linux. That support does not extend to macOS Wine.", "Some players disable EAC for offline play; that breaks multiplayer and EasyPlay will not automate it."] },
-
-    { "id": "rust", "title": "Rust", "aliases": [], "publisher": "Facepunch Studios",
-      "store": { "kind": "steam", "id": "252490", "url": null },
-      "macNative": false, "antiCheat": "easyAntiCheat", "graphicsAPI": ["DirectX 11", "Vulkan"], "presetID": null,
-      "verdict": "notSupported", "source": "Facepunch publicly documents Easy Anti-Cheat on Rust",
-      "lastReviewed": "2026-09-09", "notes": ["Facepunch dropped its macOS build in 2021."] },
-
-    { "id": "escape-from-tarkov", "title": "Escape from Tarkov", "aliases": ["tarkov", "eft"], "publisher": "Battlestate Games",
-      "store": { "kind": "publisher", "id": null, "url": "https://www.escapefromtarkov.com" },
-      "macNative": false, "antiCheat": "battlEye", "graphicsAPI": ["DirectX 11"], "presetID": null,
-      "verdict": "notSupported", "source": "Battlestate publicly documents BattlEye on Tarkov",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "call-of-duty", "title": "Call of Duty", "aliases": ["cod", "warzone", "modern warfare", "black ops"], "publisher": "Activision",
-      "store": { "kind": "steam", "id": "1938090", "url": null },
-      "macNative": false, "antiCheat": "ricochet", "graphicsAPI": ["DirectX 12"], "presetID": null,
-      "verdict": "notSupported", "source": "Activision publicly documents RICOCHET as a kernel-level driver",
-      "lastReviewed": "2026-09-09", "notes": ["Applies to the modern Call of Duty titles and Warzone."] },
-
-    { "id": "genshin-impact", "title": "Genshin Impact", "aliases": ["genshin"], "publisher": "HoYoverse",
-      "store": { "kind": "publisher", "id": null, "url": "https://genshin.hoyoverse.com" },
-      "macNative": false, "antiCheat": "mhyprot", "graphicsAPI": ["DirectX 11"], "presetID": null,
-      "verdict": "notSupported", "source": "The Windows client installs a kernel-level anti-cheat driver",
-      "lastReviewed": "2026-09-09", "notes": ["There are official iOS and Android builds; there is no macOS client."] },
-
-    { "id": "forza-horizon-5", "title": "Forza Horizon 5", "aliases": ["forza", "fh5"], "publisher": "Xbox Game Studios",
-      "store": { "kind": "steam", "id": "1551360", "url": null },
-      "macNative": false, "antiCheat": "easyAntiCheat", "graphicsAPI": ["DirectX 12"], "presetID": null,
-      "verdict": "notSupported", "source": "Playground Games ships Easy Anti-Cheat with Forza Horizon 5",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "baldurs-gate-3", "title": "Baldur's Gate 3", "aliases": ["bg3", "baldurs gate 3", "baldur's gate iii"], "publisher": "Larian Studios",
-      "store": { "kind": "steam", "id": "1086940", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Vulkan", "Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "Larian ships an official macOS build",
-      "lastReviewed": "2026-09-09", "notes": ["Buy the Mac version - it runs natively and will outperform anything Wine can do."] },
-
-    { "id": "cyberpunk-2077", "title": "Cyberpunk 2077", "aliases": ["cyberpunk", "cp2077"], "publisher": "CD PROJEKT RED",
-      "store": { "kind": "steam", "id": "1091500", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["DirectX 12", "Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "CD PROJEKT RED ships an Apple Silicon macOS build",
-      "lastReviewed": "2026-09-09", "notes": ["The Mac version is native to Apple Silicon - no need for EasyPlay."] },
-
-    { "id": "hades", "title": "Hades", "aliases": [], "publisher": "Supergiant Games",
-      "store": { "kind": "steam", "id": "1145360", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "Supergiant ships an official macOS build",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "stardew-valley", "title": "Stardew Valley", "aliases": ["stardew"], "publisher": "ConcernedApe",
-      "store": { "kind": "steam", "id": "413150", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "ConcernedApe ships an official macOS build",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "no-mans-sky", "title": "No Man's Sky", "aliases": ["nms", "no mans sky"], "publisher": "Hello Games",
-      "store": { "kind": "steam", "id": "275850", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Metal", "Vulkan"], "presetID": null,
-      "verdict": "runsGreat", "source": "Hello Games ships an Apple Silicon macOS build",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "death-stranding", "title": "Death Stranding Director's Cut", "aliases": ["death stranding"], "publisher": "505 Games",
-      "store": { "kind": "steam", "id": "1850570", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "Kojima Productions ships an Apple Silicon macOS build",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "resident-evil-village", "title": "Resident Evil Village", "aliases": ["re8", "resident evil 8"], "publisher": "Capcom",
-      "store": { "kind": "steam", "id": "1196590", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "Capcom ships an Apple Silicon macOS build",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "civilization-vi", "title": "Sid Meier's Civilization VI", "aliases": ["civ 6", "civ6", "civilization 6"], "publisher": "2K",
-      "store": { "kind": "steam", "id": "289070", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "Aspyr ships an official macOS build",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "disco-elysium", "title": "Disco Elysium: The Final Cut", "aliases": ["disco elysium"], "publisher": "ZA/UM",
-      "store": { "kind": "steam", "id": "632470", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "ZA/UM ships an official macOS build",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "hollow-knight", "title": "Hollow Knight", "aliases": ["hollowknight"], "publisher": "Team Cherry",
-      "store": { "kind": "steam", "id": "367520", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "Team Cherry ships an official macOS build",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "celeste", "title": "Celeste", "aliases": [], "publisher": "Maddy Makes Games",
-      "store": { "kind": "steam", "id": "504230", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "Maddy Makes Games ships an official macOS build",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "divinity-original-sin-2", "title": "Divinity: Original Sin 2", "aliases": ["dos2", "divinity 2"], "publisher": "Larian Studios",
-      "store": { "kind": "steam", "id": "435150", "url": null },
-      "macNative": true, "antiCheat": null, "graphicsAPI": ["Metal"], "presetID": null,
-      "verdict": "runsGreat", "source": "Larian ships an official macOS build",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "ride-4", "title": "RIDE 4", "aliases": ["ride4"], "publisher": "Milestone S.r.l.",
-      "store": { "kind": "steam", "id": "1259980", "url": null },
-      "macNative": false, "antiCheat": null, "graphicsAPI": ["DirectX 11"], "presetID": "ride-4",
-      "verdict": "runsGreat", "source": "CodeWeavers CrossOver compatibility database",
-      "lastReviewed": "2026-09-09", "notes": ["EasyPlay ships a preset for this game.", "The rating comes from CrossOver's database and has not been re-verified locally."] },
-
-    { "id": "the-witcher-3", "title": "The Witcher 3: Wild Hunt", "aliases": ["witcher 3", "tw3"], "publisher": "CD PROJEKT RED",
-      "store": { "kind": "steam", "id": "292030", "url": null },
-      "macNative": false, "antiCheat": null, "graphicsAPI": ["DirectX 11", "DirectX 12"], "presetID": null,
-      "verdict": "untested", "source": "No known blocker; not verified by EasyPlay",
-      "lastReviewed": "2026-09-09", "notes": ["Single-player, no anti-cheat, 64-bit DirectX 11 - the combination most likely to work."] },
-
-    { "id": "skyrim-special-edition", "title": "The Elder Scrolls V: Skyrim Special Edition", "aliases": ["skyrim", "skyrim se"], "publisher": "Bethesda",
-      "store": { "kind": "steam", "id": "489830", "url": null },
-      "macNative": false, "antiCheat": null, "graphicsAPI": ["DirectX 11"], "presetID": null,
-      "verdict": "untested", "source": "No known blocker; not verified by EasyPlay",
-      "lastReviewed": "2026-09-09", "notes": ["Single-player, no anti-cheat, 64-bit DirectX 11."] },
-
-    { "id": "sekiro", "title": "Sekiro: Shadows Die Twice", "aliases": ["sekiro"], "publisher": "FromSoftware",
-      "store": { "kind": "steam", "id": "814380", "url": null },
-      "macNative": false, "antiCheat": null, "graphicsAPI": ["DirectX 11"], "presetID": null,
-      "verdict": "untested", "source": "No known blocker; not verified by EasyPlay",
-      "lastReviewed": "2026-09-09", "notes": ["Single-player only, and unlike ELDEN RING it ships no Easy Anti-Cheat."] },
-
-    { "id": "counter-strike-2", "title": "Counter-Strike 2", "aliases": ["cs2", "counter strike 2", "csgo"], "publisher": "Valve",
-      "store": { "kind": "steam", "id": "730", "url": null },
-      "macNative": false, "antiCheat": "vac", "graphicsAPI": ["DirectX 11", "Vulkan"], "presetID": null,
-      "verdict": "untested", "source": "VAC is not kernel-level; not verified by EasyPlay",
-      "lastReviewed": "2026-09-09", "notes": ["Valve dropped the macOS build with Counter-Strike 2.", "VAC does not block Wine the way kernel anti-cheat does, but Valve may still act on unusual clients."] },
-
-    { "id": "hogwarts-legacy", "title": "Hogwarts Legacy", "aliases": ["hogwarts"], "publisher": "Warner Bros. Games",
-      "store": { "kind": "steam", "id": "990080", "url": null },
-      "macNative": false, "antiCheat": "denuvo", "graphicsAPI": ["DirectX 12"], "presetID": null,
-      "verdict": "untested", "source": "No kernel anti-cheat; not verified by EasyPlay",
-      "lastReviewed": "2026-09-09", "notes": ["Denuvo copy protection sometimes misbehaves under Wine.", "DirectX 12 is less well covered than DirectX 11 on Apple Silicon."] },
-
-    { "id": "monster-hunter-world", "title": "Monster Hunter: World", "aliases": ["mhw", "monster hunter world"], "publisher": "Capcom",
-      "store": { "kind": "steam", "id": "582010", "url": null },
-      "macNative": false, "antiCheat": null, "graphicsAPI": ["DirectX 11"], "presetID": null,
-      "verdict": "untested", "source": "No known blocker; not verified by EasyPlay",
-      "lastReviewed": "2026-09-09", "notes": [] },
-
-    { "id": "control", "title": "Control", "aliases": [], "publisher": "505 Games",
-      "store": { "kind": "steam", "id": "870780", "url": null },
-      "macNative": false, "antiCheat": null, "graphicsAPI": ["DirectX 11", "DirectX 12"], "presetID": null,
-      "verdict": "untested", "source": "No known blocker; not verified by EasyPlay",
-      "lastReviewed": "2026-09-09", "notes": [] }
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "apex-legends",
+      "title": "Apex Legends",
+      "aliases": [
+        "apex"
+      ],
+      "publisher": "Electronic Arts",
+      "store": {
+        "kind": "steam",
+        "id": "1172470",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [
+        "DirectX 11"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "EA publicly documents Easy Anti-Cheat on Apex Legends",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "EA ended Steam Deck and Linux support in 2024 over anti-cheat."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "ark-survival-ascended",
+      "title": "ARK: Survival Ascended",
+      "aliases": [
+        "ark"
+      ],
+      "publisher": "Studio Wildcard",
+      "store": {
+        "kind": "steam",
+        "id": "2399830",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "arma-3",
+      "title": "Arma 3",
+      "aliases": [
+        "arma"
+      ],
+      "publisher": "Bohemia Interactive",
+      "store": {
+        "kind": "steam",
+        "id": "107410",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": "battlEye",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "balatro",
+      "title": "Balatro",
+      "aliases": [],
+      "publisher": "Playstack",
+      "store": {
+        "kind": "steam",
+        "id": "2379780",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "baldurs-gate-3",
+      "title": "Baldur's Gate 3",
+      "aliases": [
+        "bg3",
+        "baldurs gate 3",
+        "baldur's gate iii"
+      ],
+      "publisher": "Larian Studios",
+      "store": {
+        "kind": "steam",
+        "id": "1086940",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Vulkan",
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Buy the Mac version - it runs natively and will outperform anything Wine can do."
+      ]
+    },
+    {
+      "id": "battlefield-2042",
+      "title": "Battlefield\u2122 2042",
+      "aliases": [
+        "bf2042",
+        "battlefield"
+      ],
+      "publisher": "Electronic Arts",
+      "store": {
+        "kind": "steam",
+        "id": "1517290",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "javelin",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "black-myth-wukong",
+      "title": "Black Myth: Wukong",
+      "aliases": [
+        "wukong"
+      ],
+      "publisher": "Game Science",
+      "store": {
+        "kind": "steam",
+        "id": "2358720",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "borderlands-3",
+      "title": "Borderlands 3",
+      "aliases": [
+        "borderlands"
+      ],
+      "publisher": "2K",
+      "store": {
+        "kind": "steam",
+        "id": "397540",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "call-of-duty",
+      "title": "Call of Duty",
+      "aliases": [
+        "cod",
+        "warzone",
+        "modern warfare",
+        "black ops"
+      ],
+      "publisher": "Activision",
+      "store": {
+        "kind": "steam",
+        "id": "1938090",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "ricochet",
+      "graphicsAPI": [
+        "DirectX 12"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Activision publicly documents RICOCHET as a kernel-level driver",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Applies to the modern Call of Duty titles and Warzone."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "celeste",
+      "title": "Celeste",
+      "aliases": [],
+      "publisher": "Maddy Makes Games",
+      "store": {
+        "kind": "steam",
+        "id": "504230",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "cities-skylines",
+      "title": "Cities: Skylines",
+      "aliases": [
+        "cities skylines"
+      ],
+      "publisher": "Paradox Interactive",
+      "store": {
+        "kind": "steam",
+        "id": "255710",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "company-of-heroes-3",
+      "title": "Company of Heroes 3",
+      "aliases": [
+        "coh3"
+      ],
+      "publisher": "Relic Entertainment",
+      "store": {
+        "kind": "steam",
+        "id": "1677280",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "control",
+      "title": "Control",
+      "aliases": [],
+      "publisher": "505 Games",
+      "store": {
+        "kind": "steam",
+        "id": "870780",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "DirectX 11",
+        "DirectX 12"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "counter-strike-2",
+      "title": "Counter-Strike 2",
+      "aliases": [
+        "cs2",
+        "counter strike 2",
+        "csgo"
+      ],
+      "publisher": "Valve",
+      "store": {
+        "kind": "steam",
+        "id": "730",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "vac",
+      "graphicsAPI": [
+        "DirectX 11",
+        "Vulkan"
+      ],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "VAC is not kernel-level; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Valve dropped the macOS build with Counter-Strike 2.",
+        "VAC does not block Wine the way kernel anti-cheat does, but Valve may still act on unusual clients."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "crusader-kings-3",
+      "title": "Crusader Kings III",
+      "aliases": [
+        "ck3"
+      ],
+      "publisher": "Paradox Interactive",
+      "store": {
+        "kind": "steam",
+        "id": "1158310",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "cult-of-the-lamb",
+      "title": "Cult of the Lamb",
+      "aliases": [],
+      "publisher": "Devolver Digital",
+      "store": {
+        "kind": "steam",
+        "id": "1313140",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "cyberpunk-2077",
+      "title": "Cyberpunk 2077",
+      "aliases": [
+        "cyberpunk",
+        "cp2077"
+      ],
+      "publisher": "CD PROJEKT RED",
+      "store": {
+        "kind": "steam",
+        "id": "1091500",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "DirectX 12",
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "The Mac version is native to Apple Silicon - no need for EasyPlay."
+      ]
+    },
+    {
+      "id": "dark-souls-3",
+      "title": "DARK SOULS\u2122 III",
+      "aliases": [
+        "ds3",
+        "dark souls 3"
+      ],
+      "publisher": "FromSoftware, Inc.",
+      "store": {
+        "kind": "steam",
+        "id": "374320",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Unlike Sekiro, Dark Souls III ships Easy Anti-Cheat."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "dave-the-diver",
+      "title": "DAVE THE DIVER",
+      "aliases": [],
+      "publisher": "MINTROCKET",
+      "store": {
+        "kind": "steam",
+        "id": "1868140",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "dayz",
+      "title": "DayZ",
+      "aliases": [],
+      "publisher": "Bohemia Interactive",
+      "store": {
+        "kind": "steam",
+        "id": "221100",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "battlEye",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "dead-by-daylight",
+      "title": "Dead by Daylight",
+      "aliases": [
+        "dbd"
+      ],
+      "publisher": "Behaviour Interactive Inc.",
+      "store": {
+        "kind": "steam",
+        "id": "381210",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "death-stranding",
+      "title": "Death Stranding Director's Cut",
+      "aliases": [
+        "death stranding"
+      ],
+      "publisher": "505 Games",
+      "store": {
+        "kind": "publisher",
+        "id": null,
+        "url": "https://apps.apple.com/app/death-stranding-directors-cut/id6450262205"
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Publisher sells a native Apple Silicon build on the Mac App Store",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "The Steam edition is Windows-only. The Mac version is sold separately on the Mac App Store - buy that one."
+      ]
+    },
+    {
+      "id": "destiny-2",
+      "title": "Destiny 2",
+      "aliases": [
+        "destiny2",
+        "d2"
+      ],
+      "publisher": "Bungie",
+      "store": {
+        "kind": "steam",
+        "id": "1085660",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "battlEye",
+      "graphicsAPI": [
+        "DirectX 11",
+        "DirectX 12"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Bungie publicly documents BattlEye on Destiny 2",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Bungie has stated that playing via emulation risks a ban."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "diablo-4",
+      "title": "Diablo\u00ae IV",
+      "aliases": [
+        "diablo iv"
+      ],
+      "publisher": "Blizzard Entertainment, Inc.",
+      "store": {
+        "kind": "steam",
+        "id": "2344520",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Requires the Battle.net launcher, which adds its own complications under Wine."
+      ]
+    },
+    {
+      "id": "disco-elysium",
+      "title": "Disco Elysium: The Final Cut",
+      "aliases": [
+        "disco elysium"
+      ],
+      "publisher": "ZA/UM",
+      "store": {
+        "kind": "steam",
+        "id": "632470",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "divinity-original-sin-2",
+      "title": "Divinity: Original Sin 2",
+      "aliases": [
+        "dos2",
+        "divinity 2"
+      ],
+      "publisher": "Larian Studios",
+      "store": {
+        "kind": "steam",
+        "id": "435150",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "dont-starve-together",
+      "title": "Don't Starve Together",
+      "aliases": [
+        "dont starve"
+      ],
+      "publisher": "Klei Entertainment",
+      "store": {
+        "kind": "steam",
+        "id": "322330",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "dota-2",
+      "title": "Dota 2",
+      "aliases": [
+        "dota"
+      ],
+      "publisher": "Valve",
+      "store": {
+        "kind": "steam",
+        "id": "570",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "elden-ring",
+      "title": "ELDEN RING",
+      "aliases": [
+        "eldenring"
+      ],
+      "publisher": "FromSoftware",
+      "store": {
+        "kind": "steam",
+        "id": "1245620",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [
+        "DirectX 12"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "FromSoftware ships Easy Anti-Cheat with ELDEN RING",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "It runs on Steam Deck because Easy Anti-Cheat has an opt-in Proton mode for Linux. That support does not extend to macOS Wine.",
+        "Some players disable EAC for offline play; that breaks multiplayer and EasyPlay will not automate it."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "escape-from-tarkov",
+      "title": "Escape from Tarkov",
+      "aliases": [
+        "tarkov",
+        "eft"
+      ],
+      "publisher": "Battlestate Games",
+      "store": {
+        "kind": "publisher",
+        "id": null,
+        "url": "https://www.escapefromtarkov.com"
+      },
+      "macNative": false,
+      "antiCheat": "battlEye",
+      "graphicsAPI": [
+        "DirectX 11"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Battlestate publicly documents BattlEye on Tarkov",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "europa-universalis-4",
+      "title": "Europa Universalis IV",
+      "aliases": [
+        "eu4"
+      ],
+      "publisher": "Paradox Interactive",
+      "store": {
+        "kind": "steam",
+        "id": "236850",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "fall-guys",
+      "title": "Fall Guys",
+      "aliases": [],
+      "publisher": "Epic Games",
+      "store": {
+        "kind": "steam",
+        "id": "1097150",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "final-fantasy-xiv",
+      "title": "FINAL FANTASY XIV Online",
+      "aliases": [
+        "ffxiv",
+        "ff14"
+      ],
+      "publisher": "Square Enix",
+      "store": {
+        "kind": "steam",
+        "id": "39210",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "firewatch",
+      "title": "Firewatch",
+      "aliases": [],
+      "publisher": "Panic",
+      "store": {
+        "kind": "steam",
+        "id": "383870",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "fortnite",
+      "title": "Fortnite",
+      "aliases": [],
+      "publisher": "Epic Games",
+      "store": {
+        "kind": "epic",
+        "id": "fortnite",
+        "url": "https://www.fortnite.com"
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [
+        "DirectX 11",
+        "DirectX 12"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Epic publicly documents Easy Anti-Cheat on Fortnite",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Epic withdrew macOS support for Battle Royale in 2020."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "forza-horizon-5",
+      "title": "Forza Horizon 5",
+      "aliases": [
+        "forza",
+        "fh5"
+      ],
+      "publisher": "Xbox Game Studios",
+      "store": {
+        "kind": "steam",
+        "id": "1551360",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [
+        "DirectX 12"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Playground Games ships Easy Anti-Cheat with Forza Horizon 5",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "frostpunk",
+      "title": "Frostpunk",
+      "aliases": [],
+      "publisher": "11 bit studios",
+      "store": {
+        "kind": "steam",
+        "id": "323190",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "genshin-impact",
+      "title": "Genshin Impact",
+      "aliases": [
+        "genshin"
+      ],
+      "publisher": "HoYoverse",
+      "store": {
+        "kind": "publisher",
+        "id": null,
+        "url": "https://genshin.hoyoverse.com"
+      },
+      "macNative": false,
+      "antiCheat": "mhyprot",
+      "graphicsAPI": [
+        "DirectX 11"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "The Windows client installs a kernel-level anti-cheat driver",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "There are official iOS and Android builds; there is no macOS client."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "god-of-war",
+      "title": "God of War",
+      "aliases": [
+        "gow"
+      ],
+      "publisher": "PlayStation Publishing LLC",
+      "store": {
+        "kind": "steam",
+        "id": "1593500",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "grand-theft-auto-v",
+      "title": "Grand Theft Auto V Legacy",
+      "aliases": [
+        "gta 5",
+        "gta v",
+        "gtav"
+      ],
+      "publisher": "Rockstar Games",
+      "store": {
+        "kind": "steam",
+        "id": "271590",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "battlEye",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "BattlEye covers GTA Online only; single-player not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "GTA Online runs BattlEye; the single-player campaign does not."
+      ],
+      "antiCheatScope": "onlineOnly"
+    },
+    {
+      "id": "hades",
+      "title": "Hades",
+      "aliases": [],
+      "publisher": "Supergiant Games",
+      "store": {
+        "kind": "steam",
+        "id": "1145360",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "hades-2",
+      "title": "Hades II",
+      "aliases": [
+        "hades ii"
+      ],
+      "publisher": "Supergiant Games",
+      "store": {
+        "kind": "steam",
+        "id": "1145350",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "half-life-2",
+      "title": "Half-Life 2",
+      "aliases": [
+        "half life"
+      ],
+      "publisher": "Valve",
+      "store": {
+        "kind": "steam",
+        "id": "220",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "halo-infinite",
+      "title": "Halo Infinite",
+      "aliases": [
+        "halo"
+      ],
+      "publisher": "Xbox Game Studios",
+      "store": {
+        "kind": "steam",
+        "id": "1240440",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "hearthstone",
+      "title": "Hearthstone",
+      "aliases": [
+        "hs"
+      ],
+      "publisher": "Blizzard Entertainment",
+      "store": {
+        "kind": "publisher",
+        "id": null,
+        "url": "https://hearthstone.blizzard.com"
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Blizzard ships an official macOS client",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "hearts-of-iron-4",
+      "title": "Hearts of Iron IV",
+      "aliases": [
+        "hoi4"
+      ],
+      "publisher": "Paradox Interactive",
+      "store": {
+        "kind": "steam",
+        "id": "394360",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "helldivers-2",
+      "title": "HELLDIVERS\u2122 2",
+      "aliases": [
+        "helldivers"
+      ],
+      "publisher": "PlayStation Publishing LLC",
+      "store": {
+        "kind": "steam",
+        "id": "553850",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "gameGuard",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "hogwarts-legacy",
+      "title": "Hogwarts Legacy",
+      "aliases": [
+        "hogwarts"
+      ],
+      "publisher": "Warner Bros. Games",
+      "store": {
+        "kind": "steam",
+        "id": "990080",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "denuvo",
+      "graphicsAPI": [
+        "DirectX 12"
+      ],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No kernel anti-cheat; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Denuvo copy protection sometimes misbehaves under Wine.",
+        "DirectX 12 is less well covered than DirectX 11 on Apple Silicon."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "hollow-knight",
+      "title": "Hollow Knight",
+      "aliases": [
+        "hollowknight"
+      ],
+      "publisher": "Team Cherry",
+      "store": {
+        "kind": "steam",
+        "id": "367520",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "horizon-zero-dawn",
+      "title": "Horizon Zero Dawn\u2122 Complete Edition",
+      "aliases": [
+        "hzd"
+      ],
+      "publisher": "PlayStation Publishing LLC",
+      "store": {
+        "kind": "steam",
+        "id": "1151640",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "hunt-showdown",
+      "title": "Hunt: Showdown 1896",
+      "aliases": [
+        "hunt"
+      ],
+      "publisher": "Crytek",
+      "store": {
+        "kind": "steam",
+        "id": "594650",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "league-of-legends",
+      "title": "League of Legends",
+      "aliases": [
+        "lol",
+        "league"
+      ],
+      "publisher": "Riot Games",
+      "store": {
+        "kind": "publisher",
+        "id": null,
+        "url": "https://www.leagueoflegends.com"
+      },
+      "macNative": true,
+      "antiCheat": "vanguard",
+      "graphicsAPI": [
+        "DirectX 11"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Riot Vanguard is publicly documented as a kernel driver",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Riot ships an official macOS client - use that rather than Wine."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "lethal-company",
+      "title": "Lethal Company",
+      "aliases": [],
+      "publisher": "Zeekerss",
+      "store": {
+        "kind": "steam",
+        "id": "1966720",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "life-is-strange",
+      "title": "Life is Strange - Episode 1",
+      "aliases": [],
+      "publisher": "Square Enix",
+      "store": {
+        "kind": "steam",
+        "id": "319630",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "spider-man-remastered",
+      "title": "Marvel\u2019s Spider-Man Remastered",
+      "aliases": [
+        "spiderman"
+      ],
+      "publisher": "PlayStation Publishing LLC",
+      "store": {
+        "kind": "steam",
+        "id": "1817070",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "metro-exodus",
+      "title": "Metro Exodus",
+      "aliases": [
+        "metro"
+      ],
+      "publisher": "Deep Silver",
+      "store": {
+        "kind": "steam",
+        "id": "412020",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "monster-hunter-world",
+      "title": "Monster Hunter: World",
+      "aliases": [
+        "mhw",
+        "monster hunter world"
+      ],
+      "publisher": "Capcom",
+      "store": {
+        "kind": "steam",
+        "id": "582010",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "DirectX 11"
+      ],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "nier-automata",
+      "title": "NieR:Automata\u2122",
+      "aliases": [
+        "nier"
+      ],
+      "publisher": "Square Enix",
+      "store": {
+        "kind": "steam",
+        "id": "524220",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "no-mans-sky",
+      "title": "No Man's Sky",
+      "aliases": [
+        "nms",
+        "no mans sky"
+      ],
+      "publisher": "Hello Games",
+      "store": {
+        "kind": "steam",
+        "id": "275850",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Metal",
+        "Vulkan"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "outer-wilds",
+      "title": "Outer Wilds",
+      "aliases": [],
+      "publisher": "Annapurna Interactive",
+      "store": {
+        "kind": "steam",
+        "id": "753640",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "overwatch-2",
+      "title": "Overwatch 2",
+      "aliases": [
+        "ow2",
+        "overwatch"
+      ],
+      "publisher": "Blizzard Entertainment",
+      "store": {
+        "kind": "publisher",
+        "id": null,
+        "url": "https://overwatch.blizzard.com"
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "Blizzard Warden is user-mode, not a kernel driver; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Blizzard dropped macOS support with Overwatch 2.",
+        "Warden does not block Wine the way kernel anti-cheat does, but Blizzard may still act on unusual clients."
+      ]
+    },
+    {
+      "id": "palworld",
+      "title": "Palworld",
+      "aliases": [],
+      "publisher": "Pocketpair",
+      "store": {
+        "kind": "steam",
+        "id": "1623730",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "persona-5-royal",
+      "title": "Persona 5 Royal",
+      "aliases": [
+        "persona 5",
+        "p5r"
+      ],
+      "publisher": "SEGA",
+      "store": {
+        "kind": "steam",
+        "id": "1687950",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "phasmophobia",
+      "title": "Phasmophobia",
+      "aliases": [],
+      "publisher": "Kinetic Games",
+      "store": {
+        "kind": "steam",
+        "id": "739630",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "portal-2",
+      "title": "Portal 2",
+      "aliases": [
+        "portal"
+      ],
+      "publisher": "Valve",
+      "store": {
+        "kind": "steam",
+        "id": "620",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "pubg",
+      "title": "PUBG: BATTLEGROUNDS",
+      "aliases": [
+        "pubg",
+        "playerunknowns battlegrounds"
+      ],
+      "publisher": "KRAFTON",
+      "store": {
+        "kind": "steam",
+        "id": "578080",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "battlEye",
+      "graphicsAPI": [
+        "DirectX 11"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "KRAFTON publicly documents BattlEye on PUBG",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "red-dead-redemption-2",
+      "title": "Red Dead Redemption 2",
+      "aliases": [
+        "rdr2",
+        "red dead 2"
+      ],
+      "publisher": "Rockstar Games",
+      "store": {
+        "kind": "steam",
+        "id": "1174180",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Launches through the Rockstar launcher, which adds its own complications under Wine."
+      ]
+    },
+    {
+      "id": "resident-evil-4",
+      "title": "Resident Evil 4",
+      "aliases": [
+        "re4"
+      ],
+      "publisher": "CAPCOM Co., Ltd.",
+      "store": {
+        "kind": "steam",
+        "id": "2050650",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "resident-evil-village",
+      "title": "Resident Evil Village",
+      "aliases": [
+        "re8",
+        "resident evil 8"
+      ],
+      "publisher": "Capcom",
+      "store": {
+        "kind": "publisher",
+        "id": null,
+        "url": "https://apps.apple.com/app/resident-evil-village/id6444056838"
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Publisher sells a native Apple Silicon build on the Mac App Store",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "The Steam edition is Windows-only. The Mac version is sold separately on the Mac App Store - buy that one."
+      ]
+    },
+    {
+      "id": "return-of-the-obra-dinn",
+      "title": "Return of the Obra Dinn",
+      "aliases": [
+        "obra dinn"
+      ],
+      "publisher": "3909",
+      "store": {
+        "kind": "steam",
+        "id": "653530",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "ride-4",
+      "title": "RIDE 4",
+      "aliases": [
+        "ride4"
+      ],
+      "publisher": "Milestone S.r.l.",
+      "store": {
+        "kind": "steam",
+        "id": "1259980",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "DirectX 11"
+      ],
+      "presetID": "ride-4",
+      "verdict": "runsGreat",
+      "source": "CodeWeavers CrossOver compatibility database",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "EasyPlay ships a preset for this game.",
+        "The rating comes from CrossOver's database and has not been re-verified locally."
+      ]
+    },
+    {
+      "id": "rimworld",
+      "title": "RimWorld",
+      "aliases": [],
+      "publisher": "Ludeon Studios",
+      "store": {
+        "kind": "steam",
+        "id": "294100",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "rise-of-the-tomb-raider",
+      "title": "Rise of the Tomb Raider\u2122",
+      "aliases": [],
+      "publisher": "Crystal Dynamics",
+      "store": {
+        "kind": "steam",
+        "id": "391220",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "rocket-league",
+      "title": "Rocket League\u00ae",
+      "aliases": [],
+      "publisher": "Psyonix LLC",
+      "store": {
+        "kind": "steam",
+        "id": "252950",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Psyonix dropped the macOS build in 2020."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "rust",
+      "title": "Rust",
+      "aliases": [],
+      "publisher": "Facepunch Studios",
+      "store": {
+        "kind": "steam",
+        "id": "252490",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [
+        "DirectX 11",
+        "Vulkan"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Facepunch publicly documents Easy Anti-Cheat on Rust",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam still flags a macOS build, but Facepunch discontinued the macOS client in 2021 - the store flag is stale.",
+        "Kernel anti-cheat blocks it under Wine in any case."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "sea-of-thieves",
+      "title": "Sea of Thieves: 2026 Edition",
+      "aliases": [
+        "sot"
+      ],
+      "publisher": "Xbox Game Studios",
+      "store": {
+        "kind": "steam",
+        "id": "1172620",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "sekiro",
+      "title": "Sekiro: Shadows Die Twice",
+      "aliases": [
+        "sekiro"
+      ],
+      "publisher": "FromSoftware",
+      "store": {
+        "kind": "steam",
+        "id": "814380",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "DirectX 11"
+      ],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Single-player only, and unlike ELDEN RING it ships no Easy Anti-Cheat."
+      ]
+    },
+    {
+      "id": "shadow-of-the-tomb-raider",
+      "title": "Shadow of the Tomb Raider: Definitive Edition",
+      "aliases": [
+        "tomb raider"
+      ],
+      "publisher": "Crystal Dynamics",
+      "store": {
+        "kind": "steam",
+        "id": "750920",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "civilization-vi",
+      "title": "Sid Meier's Civilization VI",
+      "aliases": [
+        "civ 6",
+        "civ6",
+        "civilization 6"
+      ],
+      "publisher": "2K",
+      "store": {
+        "kind": "steam",
+        "id": "289070",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "slay-the-spire",
+      "title": "Slay the Spire",
+      "aliases": [],
+      "publisher": "Mega Crit",
+      "store": {
+        "kind": "steam",
+        "id": "646570",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "squad",
+      "title": "Squad",
+      "aliases": [],
+      "publisher": "Offworld",
+      "store": {
+        "kind": "steam",
+        "id": "393380",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "starcraft-ii",
+      "title": "StarCraft II",
+      "aliases": [
+        "starcraft 2",
+        "sc2"
+      ],
+      "publisher": "Blizzard Entertainment",
+      "store": {
+        "kind": "publisher",
+        "id": null,
+        "url": "https://starcraft2.blizzard.com"
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Blizzard ships an official macOS client",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "stardew-valley",
+      "title": "Stardew Valley",
+      "aliases": [
+        "stardew"
+      ],
+      "publisher": "ConcernedApe",
+      "store": {
+        "kind": "steam",
+        "id": "413150",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "Metal"
+      ],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "starfield",
+      "title": "Starfield",
+      "aliases": [],
+      "publisher": "Bethesda Softworks",
+      "store": {
+        "kind": "steam",
+        "id": "1716740",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "stellaris",
+      "title": "Stellaris",
+      "aliases": [],
+      "publisher": "Paradox Interactive",
+      "store": {
+        "kind": "steam",
+        "id": "281990",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "subnautica",
+      "title": "Subnautica",
+      "aliases": [],
+      "publisher": "Unknown Worlds Entertainment",
+      "store": {
+        "kind": "steam",
+        "id": "264710",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "team-fortress-2",
+      "title": "Team Fortress 2",
+      "aliases": [
+        "tf2"
+      ],
+      "publisher": "Valve",
+      "store": {
+        "kind": "steam",
+        "id": "440",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "terraria",
+      "title": "Terraria",
+      "aliases": [],
+      "publisher": "Re-Logic",
+      "store": {
+        "kind": "steam",
+        "id": "105600",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "skyrim-special-edition",
+      "title": "The Elder Scrolls V: Skyrim Special Edition",
+      "aliases": [
+        "skyrim",
+        "skyrim se"
+      ],
+      "publisher": "Bethesda",
+      "store": {
+        "kind": "steam",
+        "id": "489830",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "DirectX 11"
+      ],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Single-player, no anti-cheat, 64-bit DirectX 11."
+      ]
+    },
+    {
+      "id": "the-finals",
+      "title": "THE FINALS",
+      "aliases": [
+        "finals"
+      ],
+      "publisher": "Embark Studios",
+      "store": {
+        "kind": "steam",
+        "id": "2073850",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "easyAntiCheat",
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Anti-cheat is publicly documented by the publisher",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "the-last-of-us-part-1",
+      "title": "The Last of Us\u2122 Part I",
+      "aliases": [
+        "last of us",
+        "tlou"
+      ],
+      "publisher": "PlayStation Publishing LLC",
+      "store": {
+        "kind": "steam",
+        "id": "1888930",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "the-sims-4",
+      "title": "The Sims\u2122 4",
+      "aliases": [
+        "sims 4",
+        "sims"
+      ],
+      "publisher": "Electronic Arts",
+      "store": {
+        "kind": "steam",
+        "id": "1222670",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": []
+    },
+    {
+      "id": "the-witcher-3",
+      "title": "The Witcher 3: Wild Hunt",
+      "aliases": [
+        "witcher 3",
+        "tw3"
+      ],
+      "publisher": "CD PROJEKT RED",
+      "store": {
+        "kind": "steam",
+        "id": "292030",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "graphicsAPI": [
+        "DirectX 11",
+        "DirectX 12"
+      ],
+      "presetID": null,
+      "verdict": "untested",
+      "source": "No known blocker; not verified by EasyPlay",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Single-player, no anti-cheat, 64-bit DirectX 11 - the combination most likely to work."
+      ]
+    },
+    {
+      "id": "rainbow-six-siege",
+      "title": "Tom Clancy's Rainbow Six Siege",
+      "aliases": [
+        "r6",
+        "siege",
+        "rainbow six"
+      ],
+      "publisher": "Ubisoft",
+      "store": {
+        "kind": "steam",
+        "id": "359550",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": "battlEye",
+      "graphicsAPI": [
+        "DirectX 11",
+        "Vulkan"
+      ],
+      "presetID": null,
+      "verdict": "notSupported",
+      "source": "Ubisoft publicly documents BattlEye on Siege",
+      "lastReviewed": "2026-09-09",
+      "notes": [],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "total-war-warhammer-3",
+      "title": "Total War: WARHAMMER III",
+      "aliases": [
+        "warhammer 3",
+        "twwh3"
+      ],
+      "publisher": "SEGA",
+      "store": {
+        "kind": "steam",
+        "id": "1142710",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "untitled-goose-game",
+      "title": "Untitled Goose Game",
+      "aliases": [
+        "goose game"
+      ],
+      "publisher": "Panic",
+      "store": {
+        "kind": "steam",
+        "id": "837470",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "valheim",
+      "title": "Valheim",
+      "aliases": [],
+      "publisher": "Coffee Stain Publishing",
+      "store": {
+        "kind": "steam",
+        "id": "892970",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "valorant",
+      "title": "VALORANT",
+      "aliases": [
+        "valo"
+      ],
+      "publisher": "Riot Games",
+      "store": {
+        "kind": "publisher",
+        "id": null,
+        "url": "https://playvalorant.com"
+      },
+      "macNative": false,
+      "antiCheat": "vanguard",
+      "graphicsAPI": [
+        "DirectX 11"
+      ],
+      "presetID": "valorant",
+      "verdict": "notSupported",
+      "source": "Riot Vanguard is publicly documented as a kernel driver",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Riot has stated Vanguard will not support emulation or virtualisation."
+      ],
+      "antiCheatScope": "wholeGame"
+    },
+    {
+      "id": "vampire-survivors",
+      "title": "Vampire Survivors",
+      "aliases": [],
+      "publisher": "poncle",
+      "store": {
+        "kind": "steam",
+        "id": "1794680",
+        "url": null
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Steam platform data, checked 2026-09-09",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Steam lists an official macOS build - buy the Mac version rather than using EasyPlay."
+      ]
+    },
+    {
+      "id": "world-of-warcraft",
+      "title": "World of Warcraft",
+      "aliases": [
+        "wow"
+      ],
+      "publisher": "Blizzard Entertainment",
+      "store": {
+        "kind": "publisher",
+        "id": null,
+        "url": "https://worldofwarcraft.blizzard.com"
+      },
+      "macNative": true,
+      "antiCheat": null,
+      "graphicsAPI": [],
+      "presetID": null,
+      "verdict": "runsGreat",
+      "source": "Blizzard ships an official macOS client",
+      "lastReviewed": "2026-09-09",
+      "notes": [
+        "Use Blizzard's Mac client rather than Wine."
+      ]
+    }
   ]
 }

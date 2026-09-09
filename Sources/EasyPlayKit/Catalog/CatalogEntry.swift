@@ -7,6 +7,8 @@ public enum AntiCheat: String, Codable, CaseIterable {
     case vanguard
     case ricochet
     case mhyprot
+    case javelin
+    case gameGuard
     /// Valve Anti-Cheat — server-side and user-space, so it is not a blocker.
     case vac
     case denuvo
@@ -18,6 +20,8 @@ public enum AntiCheat: String, Codable, CaseIterable {
         case .vanguard: return "Riot Vanguard"
         case .ricochet: return "RICOCHET"
         case .mhyprot: return "mhyprot"
+        case .javelin: return "EA Javelin"
+        case .gameGuard: return "nProtect GameGuard"
         case .vac: return "VAC"
         case .denuvo: return "Denuvo"
         }
@@ -28,7 +32,7 @@ public enum AntiCheat: String, Codable, CaseIterable {
     /// structural fact, not a bug waiting to be fixed.
     public var isKernelLevel: Bool {
         switch self {
-        case .easyAntiCheat, .battlEye, .vanguard, .ricochet, .mhyprot: return true
+        case .easyAntiCheat, .battlEye, .vanguard, .ricochet, .mhyprot, .javelin, .gameGuard: return true
         case .vac, .denuvo: return false
         }
     }
@@ -45,12 +49,27 @@ public enum AntiCheat: String, Codable, CaseIterable {
             return "RICOCHET is a Windows kernel-level driver with no Linux or macOS support."
         case .mhyprot:
             return "This game installs a Windows kernel driver for anti-cheat, which Wine cannot provide."
+        case .javelin:
+            return "EA's Javelin anti-cheat runs as a Windows kernel driver, with no Linux or macOS support."
+        case .gameGuard:
+            return "nProtect GameGuard runs as a Windows kernel driver, which Wine cannot provide."
         case .vac:
             return "VAC runs in user space and on the server, so it does not block Wine by itself."
         case .denuvo:
             return "Denuvo is copy protection rather than kernel anti-cheat. It sometimes works under Wine and sometimes doesn't."
         }
     }
+}
+
+/// How much of a game an anti-cheat system governs.
+///
+/// Some games run anti-cheat only in their online modes — GTA V's BattlEye
+/// covers GTA Online and not the single-player campaign. Treating those as
+/// wholly blocked would be wrong, and treating them as fine would be worse, so
+/// the scope is recorded and the advice says which half works.
+public enum AntiCheatScope: String, Codable {
+    case wholeGame
+    case onlineOnly
 }
 
 /// Where a game is sold, so EasyPlay can send you to the real storefront.
@@ -104,6 +123,8 @@ public struct CatalogEntry: Codable, Identifiable, Equatable {
     /// means EasyPlay isn't needed at all.
     public let macNative: Bool
     public let antiCheat: AntiCheat?
+    /// Defaults to governing the whole game when unspecified.
+    public let antiCheatScope: AntiCheatScope?
     public let graphicsAPI: [String]
     /// A shipped preset, when one exists.
     public let presetID: String?
@@ -113,6 +134,12 @@ public struct CatalogEntry: Codable, Identifiable, Equatable {
     public let source: String
     public let lastReviewed: String
     public let notes: [String]
+
+    /// True only when anti-cheat blocks the entire game.
+    public var isBlockedByAntiCheat: Bool {
+        guard let antiCheat, antiCheat.isKernelLevel else { return false }
+        return (antiCheatScope ?? .wholeGame) == .wholeGame
+    }
 
     /// Every name this entry should answer to.
     public var searchableNames: [String] { [title] + aliases }

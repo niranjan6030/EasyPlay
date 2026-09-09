@@ -160,9 +160,11 @@ Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
   11 reaching an M4 GPU through Metal. `easyplay probe <game-id>` reports this
   for any game, so "configured for D3DMetal" and "actually using D3DMetal" can
   be told apart
-- The compatibility advisor, over a 33-game catalogue: 13 titles with a native
-  macOS build, 13 blocked by kernel anti-cheat, 7 with no known blocker
-- 158 unit checks across the environment builder, glob matcher, log classifier
+- The compatibility advisor, over a 101-game catalogue: 44 titles with a native
+  macOS build, 27 blocked by kernel anti-cheat, the rest with no known blocker.
+  Native-Mac status is verified against Steam's platform data rather than
+  asserted
+- 259 unit checks across the environment builder, glob matcher, log classifier
   and preset loader — including a regression case built from the real install
   log, asserting that Wine's harmless shortcut-builder errors raise no false
   alarm

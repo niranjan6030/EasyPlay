@@ -104,8 +104,9 @@ public struct CompatibilityAdvisor {
             )
         }
 
-        // 2. Kernel anti-cheat is structural. No preset will ever fix it.
-        if let antiCheat = entry.antiCheat, antiCheat.isKernelLevel {
+        // 2. Kernel anti-cheat is structural. No preset will ever fix it — but
+        //    only when it governs the whole game.
+        if entry.isBlockedByAntiCheat, let antiCheat = entry.antiCheat {
             return Advice(
                 verdict: .willNotRun,
                 headline: "\(entry.title) won't run on a Mac",
@@ -133,10 +134,26 @@ public struct CompatibilityAdvisor {
         return Advice(
             verdict: .noKnownBlocker,
             headline: "\(entry.title) — probably, but it's unverified",
-            explanation: "Nothing EasyPlay knows about blocks this game\(entry.antiCheat.map { ". It uses \($0.displayName), which isn't kernel-level and doesn't block Wine by itself" } ?? " — no anti-cheat, and \(entry.graphicsAPI.joined(separator: " / "))"). But nobody has verified it here, so this is not a promise. Check a compatibility database before you buy.",
+            explanation: "Nothing EasyPlay knows about blocks this game\(Self.blockerClause(for: entry)). But nobody has verified it here, so this is not a promise. Check a compatibility database before you buy.",
             source: entry.source, entry: entry, notes: entry.notes,
             actions: actions, alternatives: []
         )
+    }
+
+    /// The middle of the "no known blocker" sentence, which has to read properly
+    /// whether or not we know the anti-cheat or graphics API.
+    private static func blockerClause(for entry: CatalogEntry) -> String {
+        if let antiCheat = entry.antiCheat, antiCheat.isKernelLevel,
+           entry.antiCheatScope == .onlineOnly {
+            return ". Its \(antiCheat.displayName) anti-cheat only covers the online mode, so single-player should work and multiplayer will not"
+        }
+        if let antiCheat = entry.antiCheat {
+            return ". It uses \(antiCheat.displayName), which isn't kernel-level and doesn't block Wine by itself"
+        }
+        if !entry.graphicsAPI.isEmpty {
+            return " — no anti-cheat, and \(entry.graphicsAPI.joined(separator: " / "))"
+        }
+        return " — no known anti-cheat"
     }
 
     private func unknownGame(_ name: String, near alternatives: [CatalogEntry]) -> Advice {

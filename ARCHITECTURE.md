@@ -217,10 +217,19 @@ game's question is worse than answering none. A second, higher threshold governs
 "did you mean…?", so nonsense input produces no suggestions at all rather than
 three unrelated games.
 
+The catalogue is 101 games. Its `macNative` field is verified against Steam's
+platform data rather than asserted from memory — a pass that corrected four
+hand-written entries, though two of those "corrections" were themselves wrong,
+because Steam knows about Steam and not about the Mac App Store. Verification
+narrowed the error rate; it did not remove the need to read the results.
+
 Two tests encode the honesty as a property rather than a habit: no catalogue
 entry may claim `runsGreat` without either a native build or a real preset behind
 it, and every definite answer must carry a source. Those hold for all 33 entries,
-and will fail loudly if someone adds an optimistic one.
+and will fail loudly if someone adds an optimistic one. A third invariant came
+out of a test failure rather than a design session: GTA V carries BattlEye, but
+only in GTA Online, so "has kernel anti-cheat" and "is blocked" had to become
+different questions — hence `antiCheatScope`.
 
 ### Not sandboxed, and it can't be
 

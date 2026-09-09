@@ -31,10 +31,18 @@ enum AdvisorTests {
                            "nothing claims to run great without a native build or a preset (\(overclaimed.map(\.id)))")
 
             // And anything with kernel anti-cheat must be refused outright.
-            let missed = catalog.entries.filter {
-                ($0.antiCheat?.isKernelLevel ?? false) && $0.verdict != .notSupported
+            // Anti-cheat that governs the whole game is an absolute blocker.
+            // Anti-cheat scoped to online play is not: GTA V's campaign is
+            // unaffected by the BattlEye that covers GTA Online.
+            let missed = catalog.entries.filter { $0.isBlockedByAntiCheat && $0.verdict != .notSupported }
+            Harness.expect(missed.isEmpty, "whole-game kernel anti-cheat always means not supported (\(missed.map(\.id)))")
+
+            let scoped = catalog.entries.filter { $0.antiCheatScope == .onlineOnly }
+            Harness.expect(!scoped.isEmpty, "the online-only anti-cheat case is represented")
+            for entry in scoped {
+                Harness.expect(!entry.isBlockedByAntiCheat,
+                               "\(entry.id): online-only anti-cheat does not block the whole game")
             }
-            Harness.expect(missed.isEmpty, "kernel anti-cheat always means not supported (\(missed.map(\.id)))")
         }
 
         Harness.suite("Question parsing") {

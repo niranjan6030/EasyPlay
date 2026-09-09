@@ -295,7 +295,26 @@ Each entry records:
 | `presetID` | Links to a shipped preset when one exists. |
 | `verdict` | Never better than the evidence: `runsGreat` requires a native build or a preset. |
 | `source` | Where the claim comes from. An entry without one is a rumour. |
+| `antiCheatScope` | Whether anti-cheat governs the whole game or only online play. GTA V's BattlEye covers GTA Online, not the campaign. |
 | `lastReviewed` | Anti-cheat and native-build status change. An undated claim rots silently. |
+
+### Verify, don't assert — and know what your source can't see
+
+`macNative` is checked against Steam's own platform data rather than written from
+memory. That pass corrected four hand-written entries, and reading the
+corrections carefully mattered more than applying them:
+
+| Entry | Steam said | What was true |
+|---|---|---|
+| Control | mac build exists | Correct — the entry was wrong, now fixed |
+| Portal 2 | no mac build | Correct. Valve's 32-bit Mac build stopped working at macOS Catalina, so the old "it has a Mac version" belief is stale |
+| Death Stranding | no mac build | Correct *about Steam*. The Mac version is sold on the Mac App Store, so the entry now points there |
+| Rust | mac build exists | Stale flag. Facepunch discontinued the macOS client in 2021, and Rust is anti-cheat blocked regardless |
+
+The lesson is worth keeping: **Steam is authoritative about Steam, not about the
+world.** Automated verification against one source turned one wrong entry right
+and would have turned two right entries wrong. Entries whose Mac build lives
+outside Steam record that in `source` and link to the real store.
 
 **Adding an entry.** Only assert what you can point at. If a game has no known
 blocker but nobody has run it, the verdict is `untested` and the advisor says so
