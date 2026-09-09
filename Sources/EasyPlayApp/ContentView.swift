@@ -9,6 +9,10 @@ struct ContentView: View {
 
         NavigationSplitView {
             List(selection: $model.screen) {
+                Section("Start here") {
+                    Label("How to use EasyPlay", systemImage: "book")
+                        .tag(AppModel.Screen.guide)
+                }
                 Section("Games") {
                     Label("Ask", systemImage: "bubble.left.and.text.bubble.right")
                         .tag(AppModel.Screen.ask)
@@ -26,6 +30,7 @@ struct ContentView: View {
         } detail: {
             Group {
                 switch model.screen {
+                case .guide: GuideView()
                 case .ask: AskView()
                 case .library: LibraryView()
                 case .bottles: BottlesView()
@@ -40,8 +45,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: .init(get: { !model.diagnoses.isEmpty },
-                                  set: { if !$0 { model.diagnoses = [] } })) {
-            DiagnosisSheet(diagnoses: model.diagnoses)
+                                  set: { if !$0 { model.dismissDiagnoses() } })) {
+            // The game has to be passed through: the fix buttons act on it, and
+            // without it they silently never render.
+            DiagnosisSheet(diagnoses: model.diagnoses, game: model.diagnosedGame)
         }
         .alert(item: $model.alert) { alert in
             Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("OK")))

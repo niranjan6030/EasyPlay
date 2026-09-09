@@ -60,6 +60,7 @@ of pressing the button.
 
 | | |
 |---|---|
+| **Explains itself** | A step-by-step guide lives inside the app, opens on first run, and states plainly what EasyPlay cannot do. |
 | **Answers "will it run?"** | Ask about a game in plain language before buying it. Answers come from a bundled catalogue with sources and review dates — never from a guess. |
 | **Checks your Mac** | Apple Silicon, Rosetta 2, Homebrew, a Wine build, disk space — with a copyable command for anything missing. |
 | **Manages bottles** | One isolated Windows environment per game. A game that corrupts its own configuration can be deleted without touching the others. |
@@ -168,6 +169,20 @@ Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
   and preset loader — including a regression case built from the real install
   log, asserting that Wine's harmless shortcut-builder errors raise no false
   alarm
+
+Known gaps, stated rather than buried:
+
+- **Steam-based installs are not implemented.** Presets model it
+  (`install.kind == .steam` plus an app ID) and the UI explains it, but nothing
+  yet installs the Steam client into a bottle and waits for a download. Titles
+  sold only through Steam — the RIDE 4 preset included — cannot be installed
+  through EasyPlay end to end today.
+- **DXVK is selectable but not provisioned.** The recipe field and DLL overrides
+  work; downloading a DXVK build into a bottle does not. In practice this costs
+  nothing on Apple Silicon, because this Game Porting Toolkit build ships no
+  Vulkan at all, so D3DMetal is the right choice anyway.
+- Two diagnostic remedies (`steam:start`, `bottle:recreate`) are recognised and
+  explained but not automated.
 
 Not yet verified end to end: the RIDE 4 preset itself. Its rating is inherited
 from CrossOver's published compatibility database, not from a local run — the

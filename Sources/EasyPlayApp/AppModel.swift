@@ -12,6 +12,7 @@ import EasyPlayKit
 final class AppModel {
 
     enum Screen: Hashable {
+        case guide
         case ask
         case library
         case bottles
@@ -31,6 +32,9 @@ final class AppModel {
     var alert: AlertContent?
     /// Diagnoses from the most recent failure, shown in a sheet.
     var diagnoses: [Diagnosis] = []
+    /// The game those diagnoses belong to. Without it the sheet cannot offer to
+    /// apply a fix, because a fix has to be applied *to* something.
+    var diagnosedGame: InstalledGame?
 
     struct Activity {
         var title: String
@@ -69,11 +73,26 @@ final class AppModel {
                 self.environment = report
                 self.bottles = bottles
                 self.games = games
-                // A first run with nothing installed should open on setup, not on
-                // an empty library that gives no clue what to do next.
-                if !report.isReady { self.screen = .setup }
+                // A first run should explain itself. After that, an unusable
+                // environment is the most useful thing to land on, and otherwise
+                // the library is where people live.
+                if self.isFirstRun {
+                    self.screen = .guide
+                    self.markGuideSeen()
+                } else if !report.isReady {
+                    self.screen = .setup
+                }
             }
         }
+    }
+
+    private static let guideSeenKey = "com.easyplay.hasSeenGuide"
+
+    /// True until the guide has been shown once.
+    var isFirstRun: Bool { !UserDefaults.standard.bool(forKey: Self.guideSeenKey) }
+
+    func markGuideSeen() {
+        UserDefaults.standard.set(true, forKey: Self.guideSeenKey)
     }
 
     func recipe(id: String?) -> Recipe? {
@@ -153,6 +172,7 @@ final class AppModel {
         guard let backend, let bottle = bottle(id: game.bottleID) else { return }
         let recipe = recipe(id: game.recipeID)
 
+        diagnosedGame = game
         run(title: "Playing \(game.title)", showsWindow: false) { report in
             report("Starting \(game.title)…")
             let outcome = try GameLauncher(backend: backend).launch(game, in: bottle, recipe: recipe)
@@ -167,6 +187,12 @@ final class AppModel {
     func startInstall(withPreset recipeID: String) {
         pendingInstallPresetID = recipeID
         screen = .library
+    }
+
+    /// Clears a failure once the user has dismissed or acted on it.
+    func dismissDiagnoses() {
+        diagnoses = []
+        diagnosedGame = nil
     }
 
     func removeGame(_ game: InstalledGame) {

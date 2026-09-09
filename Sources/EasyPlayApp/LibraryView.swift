@@ -74,12 +74,16 @@ struct LibraryView: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 380)
 
-            if model.isReady {
-                Button("Install a game") { showingInstaller = true }
-                    .buttonStyle(.borderedProminent)
-            } else {
-                Button("Go to setup") { model.screen = .setup }
-                    .buttonStyle(.borderedProminent)
+            HStack(spacing: 10) {
+                if model.isReady {
+                    Button("Install a game") { showingInstaller = true }
+                        .buttonStyle(.borderedProminent)
+                } else {
+                    Button("Go to setup") { model.screen = .setup }
+                        .buttonStyle(.borderedProminent)
+                }
+                Button("How to use EasyPlay") { model.screen = .guide }
+                    .buttonStyle(.bordered)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
