@@ -29,6 +29,9 @@ func printUsage() {
       easyplay games               List installed games
       easyplay install <installer.exe> --bottle <id> [--recipe <id>]
                                    Run a Windows installer inside a bottle
+      easyplay steam-install <recipe-id> [--no-wait] [--hours <n>]
+                                   Install a Steam game: sets up Steam in a new
+                                   bottle, opens it, and waits for your download
       easyplay play <game-id> [--seconds <n>]
                                    Launch an installed game
       easyplay probe <game-id> [--seconds <n>]
@@ -608,6 +611,72 @@ func wrap(_ text: String, width: Int) -> [String] {
     return lines
 }
 
+/// Installs a game that is only sold through Steam.
+///
+/// EasyPlay never handles Steam credentials — it opens the client and the user
+/// signs in themselves, then EasyPlay follows the download via Steam's manifest.
+func steamInstall(_ arguments: [String]) -> Int32 {
+    guard let recipeID = arguments.first, !recipeID.hasPrefix("--") else {
+        print("Usage: easyplay steam-install <recipe-id> [--no-wait] [--hours <n>]")
+        return 1
+    }
+    guard let backend = resolveBackend() else { return 1 }
+
+    let recipe: Recipe
+    do {
+        recipe = try RecipeLibrary().recipe(id: recipeID)
+    } catch {
+        print("\(Colour.red)\(error.localizedDescription)\(Colour.reset)")
+        return 1
+    }
+
+    guard recipe.install.kind == .steam, let appID = recipe.install.steamAppID else {
+        print("\(Colour.red)\(recipe.title) isn't a Steam game — use 'easyplay install' with its installer.\(Colour.reset)")
+        return 1
+    }
+    if recipe.compatibility.rating == .notSupported {
+        print("\n\(Colour.red)\(recipe.title) cannot run on a Mac.\(Colour.reset)")
+        if let reason = recipe.compatibility.unsupportedReason { print("\n\(reason.explanation)\n") }
+        return 1
+    }
+
+    let wait = !arguments.contains("--no-wait")
+    let hours = value(of: "--hours", in: arguments).flatMap(Double.init) ?? 6
+
+    print("\n\(Colour.bold)Installing \(recipe.title) through Steam\(Colour.reset)")
+    print("  \(Colour.dim)Steam app ID \(appID) · needs about \(recipe.requires.diskGB) GB\(Colour.reset)\n")
+    recipe.install.hints.forEach { print("  • \($0)") }
+    if !recipe.install.hints.isEmpty { print("") }
+
+    do {
+        let manager = BottleManager(backend: backend)
+        let bottle: Bottle
+        if let bottleID = value(of: "--bottle", in: arguments) {
+            bottle = try manager.bottle(id: bottleID)
+        } else {
+            bottle = try manager.create(name: recipe.title, recipe: recipe) { print("  \($0)") }
+        }
+
+        let game = try GameInstaller(backend: backend).installFromSteam(
+            recipe: recipe, into: bottle, waitForDownload: wait,
+            timeout: hours * 3600
+        ) { print("  \($0)") }
+
+        print("\n\(Colour.green)Installed\(Colour.reset) \(game.title)")
+        print("  play it with: easyplay play \(game.id)\n")
+        return 0
+    } catch let error as InstallError {
+        print("\n\(Colour.yellow)\(error.localizedDescription)\(Colour.reset)\n")
+        if case .steamDownloadIncomplete = error {
+            print("  \(Colour.dim)Steam keeps running in the background. Re-run this command when the download is done.\(Colour.reset)\n")
+        }
+        return 1
+    } catch {
+        print("\n\(Colour.red)\(error.localizedDescription)\(Colour.reset)\n")
+        return 1
+    }
+}
+
 // MARK: - Dispatch
 
 let exitCode: Int32
@@ -630,6 +699,8 @@ case "games":
     exitCode = listGames()
 case "install":
     exitCode = installGame(Array(arguments.dropFirst()))
+case "steam-install":
+    exitCode = steamInstall(Array(arguments.dropFirst()))
 case "play":
     exitCode = playGame(Array(arguments.dropFirst()))
 case "probe":

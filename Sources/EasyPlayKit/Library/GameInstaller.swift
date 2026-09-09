@@ -5,6 +5,7 @@ public enum InstallError: LocalizedError {
     case executableNotFound(glob: String)
     case unsupportedGame(Recipe)
     case steamNotInstalled
+    case steamDownloadIncomplete(appID: String, state: SteamInstaller.State)
 
     public var errorDescription: String? {
         switch self {
@@ -17,6 +18,18 @@ public enum InstallError: LocalizedError {
                 ?? "\(recipe.title) can't run on a Mac."
         case .steamNotInstalled:
             return "Steam isn't in this bottle yet."
+        case .steamDownloadIncomplete(_, let state):
+            switch state {
+            case .steamNotInstalled:
+                return "Steam isn't in this bottle, so the download can't be followed."
+            case .notStarted:
+                return "Steam never started downloading this game. Sign in to Steam and begin the download, then try again."
+            case .downloading(let progress):
+                let percent = progress.map { " (\(Int($0 * 100))% done)" } ?? ""
+                return "The download hadn't finished\(percent). EasyPlay stopped waiting, but Steam will carry on - come back when it's done."
+            case .installed:
+                return "The download finished after all."
+            }
         }
     }
 }
@@ -87,6 +100,73 @@ public struct GameInstaller {
         )
         try store.add(game)
         onProgress?("\(gameTitle) is installed.")
+        return game
+    }
+
+    /// Installs a game that is only sold through Steam.
+    ///
+    /// The shape of this is dictated by the one thing EasyPlay must not do:
+    /// handle the user's Steam credentials. So it installs the client, opens the
+    /// game's install page, and then *waits* — reading Steam's own manifest to
+    /// see when the download finishes — while the user signs in and clicks
+    /// Install themselves.
+    @discardableResult
+    public func installFromSteam(recipe: Recipe,
+                                 into bottle: Bottle,
+                                 waitForDownload: Bool = true,
+                                 timeout: TimeInterval = 6 * 3600,
+                                 shouldContinue: @escaping () -> Bool = { true },
+                                 onProgress: ProgressHandler? = nil) throws -> InstalledGame {
+
+        if recipe.compatibility.rating == .notSupported {
+            throw InstallError.unsupportedGame(recipe)
+        }
+        guard let appID = recipe.install.steamAppID else {
+            throw InstallError.executableNotFound(glob: "a Steam app ID in the \(recipe.title) preset")
+        }
+
+        let steam = SteamInstaller(backend: backend, runner: runner)
+        try steam.installSteam(into: bottle, recipe: recipe, onProgress: onProgress)
+
+        onProgress?("Opening Steam. Sign in, then start the \(recipe.title) download.")
+        _ = try steam.requestInstall(appID: appID, in: bottle, recipe: recipe)
+
+        guard waitForDownload else {
+            throw InstallError.steamDownloadIncomplete(
+                appID: appID, state: steam.state(appID: appID, in: bottle))
+        }
+
+        let manifest = try steam.waitForGame(
+            appID: appID, in: bottle, timeout: timeout,
+            shouldContinue: shouldContinue
+        ) { state in
+            switch state {
+            case .steamNotInstalled: onProgress?("Waiting for Steam…")
+            case .notStarted: onProgress?("Waiting for you to start the download in Steam…")
+            case .downloading(let progress):
+                onProgress?(progress.map { "Downloading \(recipe.title) — \(Int($0 * 100))%" }
+                            ?? "Downloading \(recipe.title)…")
+            case .installed: onProgress?("Download finished.")
+            }
+        }
+
+        // Prefer searching inside the folder Steam reported, so a bottle holding
+        // several games can't return the wrong executable.
+        let finder = ExecutableFinder()
+        let executable = finder.find(glob: recipe.launch.executableGlob, in: bottle)
+        guard let executable else {
+            throw InstallError.executableNotFound(glob: recipe.launch.executableGlob)
+        }
+
+        let game = InstalledGame(
+            title: manifest.name ?? recipe.title,
+            bottleID: bottle.id,
+            recipeID: recipe.id,
+            executableRelativePath: executable.path.replacingOccurrences(of: bottle.url.path + "/", with: ""),
+            compatibilityRating: recipe.compatibility.rating
+        )
+        try store.add(game)
+        onProgress?("\(game.title) is installed.")
         return game
     }
 

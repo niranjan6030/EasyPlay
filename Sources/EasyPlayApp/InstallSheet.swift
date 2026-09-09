@@ -21,6 +21,23 @@ struct InstallSheet: View {
 
     private var recipe: Recipe? { model.recipe(id: selectedRecipeID) }
 
+    /// Steam games have no installer to choose — the client is the installer.
+    private var isSteamGame: Bool { recipe?.install.kind == .steam }
+
+    private var steamExplanation: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("This game is sold through Steam", systemImage: "cart")
+                .font(.callout.weight(.medium))
+            Text("There's no installer file to choose. EasyPlay will set up Steam in this game's bottle and open it. Sign in and start the download yourself — EasyPlay never sees your Steam password — and it will pick up again once the download finishes.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("You can close the progress window at any time; Steam keeps downloading.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Install a game")
@@ -30,10 +47,18 @@ struct InstallSheet: View {
             Divider()
 
             Form {
-                Section {
-                    installerRow
-                } header: {
-                    Text("Installer")
+                if isSteamGame {
+                    Section {
+                        steamExplanation
+                    } header: {
+                        Text("How this one installs")
+                    }
+                } else {
+                    Section {
+                        installerRow
+                    } header: {
+                        Text("Installer")
+                    }
                 }
 
                 Section {
@@ -77,15 +102,17 @@ struct InstallSheet: View {
                 }
                 Spacer()
                 Button("Cancel") { dismiss() }
-                Button("Install") {
-                    if let installerURL {
-                        model.install(installerAt: installerURL, recipe: recipe,
-                                      bottleName: bottleName.isEmpty ? defaultBottleName : bottleName)
+                Button(isSteamGame ? "Install through Steam" : "Install") {
+                    let name = bottleName.isEmpty ? defaultBottleName : bottleName
+                    if isSteamGame, let recipe {
+                        model.installFromSteam(recipe: recipe, bottleName: name)
+                    } else if let installerURL {
+                        model.install(installerAt: installerURL, recipe: recipe, bottleName: name)
                     }
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(installerURL == nil)
+                .disabled(isSteamGame ? recipe == nil : installerURL == nil)
             }
             .padding(16)
         }
@@ -140,13 +167,6 @@ struct InstallSheet: View {
             LabeledContent("Windows", value: recipe.bottle.windowsVersion)
             LabeledContent("Graphics", value: recipe.graphics.backend.displayName)
             LabeledContent("Disk needed", value: "\(recipe.requires.diskGB) GB")
-
-            if recipe.install.kind == .steam {
-                Text("This game is sold through Steam, so EasyPlay installs Steam into the bottle first. Choose the Steam installer above.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
 
             ForEach(recipe.compatibility.notes.prefix(2), id: \.self) { note in
                 Text("• \(note)")

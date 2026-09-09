@@ -156,6 +156,43 @@ public struct ProcessRunner {
         )
     }
 
+    /// Starts a process and returns immediately.
+    ///
+    /// Needed for anything long-running that EasyPlay has to work alongside
+    /// rather than wait for — the Steam client is the case that forced it: the
+    /// user signs in and downloads while EasyPlay watches the manifest.
+    public func launch(
+        _ executable: String,
+        _ arguments: [String] = [],
+        environment: [String: String] = [:],
+        workingDirectory: URL? = nil
+    ) throws -> Process {
+        guard let executableURL = Self.locate(executable) else {
+            throw ProcessError.executableNotFound(executable)
+        }
+
+        let process = Process()
+        process.executableURL = executableURL
+        process.arguments = arguments
+
+        var merged = ProcessInfo.processInfo.environment
+        merged.merge(environment) { _, new in new }
+        process.environment = merged
+        if let workingDirectory { process.currentDirectoryURL = workingDirectory }
+
+        // Output is discarded deliberately: a GUI app left running for an hour
+        // would otherwise fill a pipe nobody is draining and block.
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+        } catch {
+            throw ProcessError.launchFailed(command: executable, underlying: error)
+        }
+        return process
+    }
+
     /// Same as `run`, but throws when the command reports failure. Use where a
     /// non-zero exit means the operation genuinely cannot continue.
     @discardableResult

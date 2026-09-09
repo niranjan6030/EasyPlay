@@ -70,6 +70,7 @@ struct ContentView: View {
 /// messages reach here.
 struct ActivityOverlay: View {
     let activity: AppModel.Activity
+    @Environment(AppModel.self) private var model
 
     var body: some View {
         ZStack {
@@ -100,6 +101,11 @@ struct ActivityOverlay: View {
                         }
                     }
                     .frame(maxWidth: 420, maxHeight: 100)
+                }
+
+                if activity.isCancellable {
+                    Button("Stop waiting") { model.cancelActivity() }
+                        .padding(.top, 4)
                 }
             }
             .padding(32)

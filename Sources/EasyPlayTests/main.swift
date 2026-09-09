@@ -9,5 +9,6 @@ try GameStoreTests.run()
 try GraphicsProbeTests.run()
 try WindowsExecutableTests.run()
 try AdvisorTests.run()
+try SteamTests.run()
 
 exit(Harness.summarise())

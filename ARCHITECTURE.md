@@ -231,6 +231,32 @@ out of a test failure rather than a design session: GTA V carries BattlEye, but
 only in GTA Online, so "has kernel anti-cheat" and "is blocked" had to become
 different questions — hence `antiCheatScope`.
 
+### The Steam flow is shaped by what EasyPlay refuses to touch
+
+Most modern PC games have no `setup.exe` — they are a Steam library entry, so
+supporting only standalone installers means supporting almost nothing anyone
+wants to play.
+
+The obvious implementation automates the whole thing, credentials included. That
+is off the table: EasyPlay does not handle a user's Steam password or their
+two-factor code, and any design that "just" types them somewhere is wrong.
+
+So the flow is deliberately interrupted. EasyPlay installs Valve's client into
+the bottle unattended, opens it at `steam://install/<appid>`, and then *waits* —
+polling Steam's own `appmanifest_<appid>.acf` until `StateFlags` reports fully
+installed. The user signs in and clicks Install in Steam's own window; EasyPlay
+resumes on the other side.
+
+Reading the manifest rather than watching for files matters: a half-downloaded
+50 GB game has plenty of files and none of them mean it is ready. The manifest
+also survives the subtler case — Steam keeps the installed flag set during an
+update, so `isFullyInstalled` requires the flag *and* no outstanding bytes. That
+distinction is unit-tested, because getting it wrong means launching a game
+that is still downloading.
+
+Because the wait is measured in hours, it is cancellable, and Steam keeps
+downloading after EasyPlay stops watching. Re-running the command picks it up.
+
 ### Not sandboxed, and it can't be
 
 EasyPlay's purpose is executing arbitrary third-party binaries from arbitrary

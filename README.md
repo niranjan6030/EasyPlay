@@ -138,6 +138,7 @@ swift run easyplay recipes ride-4         # inspect one
 swift run easyplay bottle-create "RIDE 4" --recipe ride-4
 swift run easyplay verify <bottle-id>     # prove the bottle runs Windows programs
 swift run easyplay install setup.exe --bottle <id>
+swift run easyplay steam-install ride-4     # sets up Steam, waits for the download
 swift run easyplay games
 swift run easyplay play <game-id>
 ```
@@ -165,18 +166,21 @@ Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
   macOS build, 27 blocked by kernel anti-cheat, the rest with no known blocker.
   Native-Mac status is verified against Steam's platform data rather than
   asserted
-- 259 unit checks across the environment builder, glob matcher, log classifier
+- 276 unit checks across the environment builder, glob matcher, log classifier
   and preset loader — including a regression case built from the real install
   log, asserting that Wine's harmless shortcut-builder errors raise no false
   alarm
 
+Steam installs work: EasyPlay downloads Valve's installer, sets Steam up inside
+the game's bottle, opens it at the game's install page, then follows the download
+by reading Steam's own `appmanifest_*.acf` until it reports fully installed.
+Verified on this Mac up to the sign-in handoff — the client installs, launches and
+pulls its own update inside the bottle. **EasyPlay never handles Steam
+credentials**: you sign in in Steam's window, so the last leg of that flow is by
+design something only you can complete.
+
 Known gaps, stated rather than buried:
 
-- **Steam-based installs are not implemented.** Presets model it
-  (`install.kind == .steam` plus an app ID) and the UI explains it, but nothing
-  yet installs the Steam client into a bottle and waits for a download. Titles
-  sold only through Steam — the RIDE 4 preset included — cannot be installed
-  through EasyPlay end to end today.
 - **DXVK is selectable but not provisioned.** The recipe field and DLL overrides
   work; downloading a DXVK build into a bottle does not. In practice this costs
   nothing on Apple Silicon, because this Game Porting Toolkit build ships no

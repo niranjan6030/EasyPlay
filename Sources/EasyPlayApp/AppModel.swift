@@ -39,6 +39,29 @@ final class AppModel {
     struct Activity {
         var title: String
         var messages: [String] = []
+        /// Long waits — a Steam download runs for hours — must be abandonable.
+        var isCancellable: Bool = false
+    }
+
+    /// Shared with the background thread doing the waiting. A plain Bool would
+    /// be read from two threads; this keeps it honest.
+    final class Cancellation: @unchecked Sendable {
+        private let lock = NSLock()
+        private var cancelled = false
+        var isCancelled: Bool {
+            lock.lock(); defer { lock.unlock() }
+            return cancelled
+        }
+        func cancel() {
+            lock.lock(); cancelled = true; lock.unlock()
+        }
+    }
+
+    private var cancellation = Cancellation()
+
+    func cancelActivity() {
+        cancellation.cancel()
+        activity?.messages.append("Stopping…")
     }
 
     struct AlertContent: Identifiable {
@@ -156,6 +179,25 @@ final class AppModel {
 
     // MARK: - Installing
 
+    /// Installs a game sold only through Steam.
+    ///
+    /// The user signs in to Steam themselves — EasyPlay never sees their
+    /// credentials — so this spends most of its life waiting, and has to be
+    /// cancellable without leaving anything half-built.
+    func installFromSteam(recipe: Recipe, bottleName: String) {
+        guard let backend else { return }
+        let cancellation = self.cancellation
+        run(title: "Installing \(recipe.title)", isCancellable: true) { report in
+            let bottle = try BottleManager(backend: backend)
+                .create(name: bottleName, recipe: recipe, onProgress: report)
+            _ = try GameInstaller(backend: backend).installFromSteam(
+                recipe: recipe, into: bottle,
+                shouldContinue: { !cancellation.isCancelled },
+                onProgress: report
+            )
+        }
+    }
+
     func install(installerAt url: URL, recipe: Recipe?, bottleName: String) {
         guard let backend else { return }
         run(title: "Installing \(recipe?.title ?? url.lastPathComponent)") { report in
@@ -243,8 +285,10 @@ final class AppModel {
     /// UI in one place so no call site has to repeat it.
     private func run(title: String,
                      showsWindow: Bool = true,
+                     isCancellable: Bool = false,
                      _ work: @escaping (@escaping (String) -> Void) throws -> Void) {
-        if showsWindow { activity = Activity(title: title) }
+        cancellation = Cancellation()
+        if showsWindow { activity = Activity(title: title, isCancellable: isCancellable) }
 
         Task.detached(priority: .userInitiated) {
             let report: (String) -> Void = { message in
