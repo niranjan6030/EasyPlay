@@ -14,7 +14,16 @@ public struct ExecutableFinder {
 
     /// Windows' own programs. A bottle contains dozens of these from the moment
     /// it is created, and none of them is ever the game the user installed.
-    private static let systemDirectories = ["/windows/"]
+    /// Windows' own programs, and the scratch space installers unpack into.
+    /// An installer's temporary extractor is new, large, and not a game — it is
+    /// the single most likely thing to be mistaken for one.
+    private static let systemDirectories = [
+        "/windows/",
+        "/users/crossover/temp/",
+        "/users/public/temp/",
+        "/temp/",
+        "/tmp/",
+    ]
 
     /// Executables installers routinely leave beside a game.
     private static let notAGame = [
@@ -29,16 +38,35 @@ public struct ExecutableFinder {
     /// launcher and crash-handler executables beside the real one, and the real
     /// one is almost always the biggest.
     ///
-    /// `installedAfter` is what stops a failed install registering nonsense. A
-    /// bottle is full of Windows' own executables, so a broad glob like
-    /// `**/*.exe` would otherwise happily pick `cmd.exe` as "the game" when an
+    /// `ignoring` is what stops a failed install registering nonsense: pass the
+    /// snapshot taken before the installer ran and only genuinely new files are
+    /// considered. A bottle is full of Windows' own executables, so a broad glob
+    /// like `**/*.exe` would otherwise pick `cmd.exe` as "the game" when an
     /// installer produced nothing at all.
-    public func find(glob: String, in bottle: Bottle, installedAfter: Date? = nil) -> URL? {
-        candidates(glob: glob, in: bottle, installedAfter: installedAfter)
+    ///
+    /// This deliberately does *not* use file timestamps. Installers routinely
+    /// preserve the original dates from their archives — 7-Zip's writes files
+    /// dated 2023, creation date included — so "newer than when we started"
+    /// silently rejects the real game.
+    public func find(glob: String, in bottle: Bottle, ignoring: Set<String> = []) -> URL? {
+        candidates(glob: glob, in: bottle, ignoring: ignoring)
             .max { size(of: $0) < size(of: $1) }
     }
 
-    public func candidates(glob: String, in bottle: Bottle, installedAfter: Date? = nil) -> [URL] {
+    /// Every executable currently in the bottle, for diffing after an install.
+    public func snapshot(of bottle: Bottle) -> Set<String> {
+        guard let enumerator = fileManager.enumerator(
+            at: bottle.driveC, includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]) else { return [] }
+
+        var paths = Set<String>()
+        for case let url as URL in enumerator where url.pathExtension.lowercased() == "exe" {
+            paths.insert(url.path)
+        }
+        return paths
+    }
+
+    public func candidates(glob: String, in bottle: Bottle, ignoring: Set<String> = []) -> [URL] {
         guard let regex = Self.regex(forGlob: glob),
               let enumerator = fileManager.enumerator(
                   at: bottle.driveC,
@@ -50,7 +78,7 @@ public struct ExecutableFinder {
         for case let fileURL as URL in enumerator {
             guard fileURL.pathExtension.lowercased() == "exe" else { continue }
             guard !isSystemOrSupportExecutable(fileURL, in: bottle) else { continue }
-            if let installedAfter, !wasWritten(fileURL, after: installedAfter) { continue }
+            guard !ignoring.contains(fileURL.path) else { continue }
             // Match against the Windows-side path so globs in presets read the
             // way a Windows user would write them.
             let relativePath = fileURL.path
@@ -74,17 +102,6 @@ public struct ExecutableFinder {
 
         let name = url.deletingPathExtension().lastPathComponent.lowercased()
         return Self.notAGame.contains { name.hasPrefix($0) }
-    }
-
-    /// Was this file written by the install we just ran?
-    ///
-    /// A second of slack, because a file copied by an installer can carry a
-    /// timestamp fractionally before the moment we started watching.
-    private func wasWritten(_ url: URL, after date: Date) -> Bool {
-        let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .creationDateKey])
-        let modified = values?.contentModificationDate ?? .distantPast
-        let created = values?.creationDate ?? .distantPast
-        return max(modified, created) >= date.addingTimeInterval(-1)
     }
 
     private func size(of url: URL) -> Int {

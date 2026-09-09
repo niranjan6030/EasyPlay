@@ -23,9 +23,7 @@ enum ExecutableFinderTests {
 
     static func run() throws {
         Harness.suite("Executable discovery in a real bottle") {
-            let installStart = Date()
-            let old = installStart.addingTimeInterval(-3600)
-            let new = installStart.addingTimeInterval(30)
+            let old = Date().addingTimeInterval(-3600)
 
             // A bottle is full of Windows' own programs from the moment it is
             // created. cmd.exe is bigger than many real game binaries, so a
@@ -33,9 +31,6 @@ enum ExecutableFinderTests {
             guard let bottle = makeBottle([
                 ("windows/syswow64/cmd.exe", 1_007_616, old),
                 ("windows/system32/winecfg.exe", 823_296, old),
-                ("Program Files/My Game/MyGame.exe", 400_000, new),
-                ("Program Files/My Game/unins000.exe", 900_000, new),
-                ("Program Files/My Game/vcredist_x64.exe", 800_000, new),
             ]) else {
                 Harness.expect(false, "test bottle could be created")
                 return
@@ -43,29 +38,43 @@ enum ExecutableFinderTests {
             defer { try? FileManager.default.removeItem(at: bottle.url) }
 
             let finder = ExecutableFinder()
-            let found = finder.find(glob: "**/*.exe", in: bottle, installedAfter: installStart)
+            let before = finder.snapshot(of: bottle)
+
+            // Installers preserve archive timestamps — 7-Zip's files are dated
+            // 2023 — so the game is identified by being *new to the bottle*,
+            // never by being recently modified.
+            for (relative, size) in [
+                ("Program Files/My Game/MyGame.exe", 400_000),
+                ("Program Files/My Game/unins000.exe", 900_000),
+                ("Program Files/My Game/vcredist_x64.exe", 800_000),
+                ("users/crossover/Temp/is-94N4S.tmp/xtool.exe", 2_000_000),
+            ] {
+                let url = bottle.driveC.appendingPathComponent(relative)
+                try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
+                                                         withIntermediateDirectories: true)
+                try? Data(repeating: 0, count: size).write(to: url)
+                try? FileManager.default.setAttributes([.modificationDate: old], ofItemAtPath: url.path)
+            }
+
+            let found = finder.find(glob: "**/*.exe", in: bottle, ignoring: before)
             Harness.expectEqual(found?.lastPathComponent, "MyGame.exe",
-                                "the installed game wins over Windows' own programs")
+                                "the installed game is found even with 2023 timestamps")
 
-            Harness.expect(finder.candidates(glob: "**/*.exe", in: bottle)
-                            .allSatisfy { !$0.path.contains("/windows/") },
-                           "Windows system executables are never candidates")
+            let names = finder.candidates(glob: "**/*.exe", in: bottle, ignoring: before)
+                .map(\.lastPathComponent)
+            Harness.expect(!names.contains("cmd.exe"), "Windows' own programs are never candidates")
+            Harness.expect(!names.contains("unins000.exe"), "uninstallers are not mistaken for the game")
+            Harness.expect(!names.contains("vcredist_x64.exe"), "bundled runtimes are not mistaken for the game")
+            // The bug a repack installer actually caused: its temporary
+            // extractor is new, large, and not a game.
+            Harness.expect(!names.contains("xtool.exe"),
+                           "an installer's temp-directory extractor is not mistaken for the game")
 
-            Harness.expect(finder.candidates(glob: "**/*.exe", in: bottle)
-                            .allSatisfy { !$0.lastPathComponent.hasPrefix("unins") },
-                           "uninstallers are not mistaken for the game")
-            Harness.expect(finder.candidates(glob: "**/*.exe", in: bottle)
-                            .allSatisfy { !$0.lastPathComponent.hasPrefix("vcredist") },
-                           "bundled runtime installers are not mistaken for the game")
-
-            // The case behind the bug: an installer that produced nothing must
-            // yield nothing, not the largest file that happened to be lying about.
-            guard let empty = makeBottle([
-                ("windows/syswow64/cmd.exe", 1_007_616, old),
-                ("windows/system32/winemine.exe", 200_000, old),
-            ]) else { return }
+            // An install that added nothing must find nothing.
+            guard let empty = makeBottle([("windows/syswow64/cmd.exe", 1_007_616, old)]) else { return }
             defer { try? FileManager.default.removeItem(at: empty.url) }
-            Harness.expect(finder.find(glob: "**/*.exe", in: empty, installedAfter: installStart) == nil,
+            Harness.expect(finder.find(glob: "**/*.exe", in: empty,
+                                       ignoring: finder.snapshot(of: empty)) == nil,
                            "an install that wrote nothing finds nothing, rather than cmd.exe")
         }
 

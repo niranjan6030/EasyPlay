@@ -79,9 +79,10 @@ public struct GameInstaller {
             onProgress?("EasyPlay carries on once the installer closes.")
         }
 
-        // Everything the installer writes is newer than this, which is how a
-        // game gets told apart from the Windows files already in the bottle.
-        let startedAt = Date()
+        // Record what is already here, so afterwards we can tell what the
+        // installer actually added.
+        let finder = ExecutableFinder()
+        let before = finder.snapshot(of: bottle)
         let arguments = [installerURL.path] + (recipe?.install.installerArguments ?? [])
         let result = try wine.run(arguments, recipe: recipe, verbosity: .diagnostic,
                                   timeout: 7200, onOutput: nil)
@@ -92,8 +93,7 @@ public struct GameInstaller {
         // Installers frequently exit non-zero and still succeed, so the exit code
         // alone doesn't decide the outcome — finding the executable does.
         let glob = recipe?.launch.executableGlob ?? "**/*.exe"
-        guard let executable = ExecutableFinder().find(glob: glob, in: bottle,
-                                                       installedAfter: startedAt) else {
+        guard let executable = finder.find(glob: glob, in: bottle, ignoring: before) else {
             var diagnoses = LogClassifier(recipe: recipe)
                 .classify(log: result.combinedOutput, exitCode: result.exitCode)
 
@@ -172,9 +172,8 @@ public struct GameInstaller {
 
         // Prefer searching inside the folder Steam reported, so a bottle holding
         // several games can't return the wrong executable.
-        let finder = ExecutableFinder()
-        let executable = finder.find(glob: recipe.launch.executableGlob, in: bottle)
-        guard let executable else {  // Steam recipes carry a specific glob, so no date filter is needed
+        let executable = ExecutableFinder().find(glob: recipe.launch.executableGlob, in: bottle)
+        guard let executable else {
             throw InstallError.executableNotFound(glob: recipe.launch.executableGlob)
         }
 
