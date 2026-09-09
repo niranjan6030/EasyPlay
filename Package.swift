@@ -17,7 +17,7 @@ let package = Package(
     targets: [
         .target(
             name: "EasyPlayKit",
-            resources: [.copy("Resources/Recipes")]
+            resources: [.copy("Resources/Recipes"), .copy("Resources/Catalog")]
         ),
         .executableTarget(name: "EasyPlayCLI", dependencies: ["EasyPlayKit"]),
         .executableTarget(name: "EasyPlayApp", dependencies: ["EasyPlayKit"]),

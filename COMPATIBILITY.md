@@ -275,6 +275,33 @@ option on this backend either. On this stack the real choice is D3DMetal for
    Record `lastVerified` and `source`. A rating whose provenance isn't stated is
    a rumour.
 
+## The game catalogue
+
+Presets say *how* to run a game. The catalogue
+(`Sources/EasyPlayKit/Resources/Catalog/catalog.json`) says *whether it is worth
+trying* — it backs the Ask screen and `easyplay ask`, and most of its entries
+have no preset at all.
+
+That is deliberate. Correctly telling someone "don't buy this, it can never work"
+is worth more than a vague maybe, and it is the answer EasyPlay can give with the
+most confidence.
+
+Each entry records:
+
+| Field | Why |
+|---|---|
+| `macNative` | A native Mac build outranks everything. The answer becomes "you don't need EasyPlay". |
+| `antiCheat` | Kernel-level (`easyAntiCheat`, `battlEye`, `vanguard`, `ricochet`, `mhyprot`) is an absolute no. `vac` and `denuvo` are not kernel-level and do not block Wine by themselves. |
+| `presetID` | Links to a shipped preset when one exists. |
+| `verdict` | Never better than the evidence: `runsGreat` requires a native build or a preset. |
+| `source` | Where the claim comes from. An entry without one is a rumour. |
+| `lastReviewed` | Anti-cheat and native-build status change. An undated claim rots silently. |
+
+**Adding an entry.** Only assert what you can point at. If a game has no known
+blocker but nobody has run it, the verdict is `untested` and the advisor says so
+out loud — the tests will reject a `runsGreat` that isn't backed by a native
+build or a preset.
+
 ## Shipped presets
 
 | Preset | Rating | Purpose |

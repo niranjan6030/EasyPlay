@@ -19,6 +19,16 @@ you what broke in a sentence instead of handing you 400 lines of `err:module:`.
 ## What it looks like
 
 <p align="center">
+  <img src="docs/screenshots/ask.png" alt="The Ask screen answering whether Elden Ring and Baldur's Gate 3 run on a Mac" width="820">
+</p>
+
+Ask, before you buy. EasyPlay answers from a catalogue it ships with and shows
+where every answer came from. It will tell you a game is impossible (kernel
+anti-cheat), that you don't need EasyPlay at all (there's a native Mac build), or
+that it simply doesn't know — it never guesses, because a confident wrong "yes"
+costs you a purchase and a 50 GB download.
+
+<p align="center">
   <img src="docs/screenshots/library.png" alt="EasyPlay's library: game cards with compatibility badges and a Play button" width="820">
 </p>
 
@@ -50,6 +60,7 @@ of pressing the button.
 
 | | |
 |---|---|
+| **Answers "will it run?"** | Ask about a game in plain language before buying it. Answers come from a bundled catalogue with sources and review dates — never from a guess. |
 | **Checks your Mac** | Apple Silicon, Rosetta 2, Homebrew, a Wine build, disk space — with a copyable command for anything missing. |
 | **Manages bottles** | One isolated Windows environment per game. A game that corrupts its own configuration can be deleted without touching the others. |
 | **Applies presets** | Per-game JSON "recipes" carrying Windows version, DLL overrides, graphics translator, environment variables and Winetricks verbs. |
@@ -119,6 +130,7 @@ but the CLI keeps the engine honest — logic that only works when a SwiftUI vie
 drives it is logic in the wrong place.
 
 ```bash
+swift run easyplay ask "can I run Elden Ring?"   # will it work before you buy?
 swift run easyplay doctor                 # check this Mac
 swift run easyplay recipes                # list presets
 swift run easyplay recipes ride-4         # inspect one
@@ -148,7 +160,9 @@ Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
   11 reaching an M4 GPU through Metal. `easyplay probe <game-id>` reports this
   for any game, so "configured for D3DMetal" and "actually using D3DMetal" can
   be told apart
-- 83 unit checks across the environment builder, glob matcher, log classifier
+- The compatibility advisor, over a 33-game catalogue: 13 titles with a native
+  macOS build, 13 blocked by kernel anti-cheat, 7 with no known blocker
+- 158 unit checks across the environment builder, glob matcher, log classifier
   and preset loader — including a regression case built from the real install
   log, asserting that Wine's harmless shortcut-builder errors raise no false
   alarm

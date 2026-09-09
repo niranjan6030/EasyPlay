@@ -28,6 +28,7 @@ cp "$BIN_DIR/EasyPlayApp" "$APP/Contents/MacOS/EasyPlay"
 # Presets go into the app's own Resources, which is where RecipeLibrary looks
 # first — the SwiftPM resource bundle's layout doesn't survive into a .app.
 cp -R "$ROOT/Sources/EasyPlayKit/Resources/Recipes" "$APP/Contents/Resources/Recipes"
+cp -R "$ROOT/Sources/EasyPlayKit/Resources/Catalog" "$APP/Contents/Resources/Catalog"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

@@ -185,6 +185,43 @@ It also produced the sharpest illustration of what this project is. Wine had all
 the information needed to explain this and chose not to surface it. That gap —
 between what the tool knows and what the user is told — is the entire product.
 
+### A chatbot that refuses to guess
+
+The natural-language front door ("can I run Elden Ring?") is the one feature
+where the obvious implementation is the wrong one. Wiring it to an LLM would
+answer every question about every game, fluently, in an afternoon.
+
+It would also destroy the only property that makes this project trustworthy.
+Every rating EasyPlay shows carries provenance — "CodeWeavers CrossOver
+compatibility database", "Verified by EasyPlay on an M4 Mac". A generated answer
+has no provenance, is confidently phrased whether right or wrong, and a wrong
+"yes" costs someone a purchase and a 50 GB download. The failure mode of the
+plausible-sounding guess is exactly what this project exists to remove.
+
+So `CompatibilityAdvisor` is a rules engine over a bundled catalogue, and its
+most important capability is **saying it does not know**. Rules are applied
+strongest-fact-first:
+
+1. **A native macOS build exists** → say so, and send them to the Mac version.
+   The best answer EasyPlay can give is "you don't need me".
+2. **Kernel anti-cheat** → structurally impossible, with the reason. No preset
+   will ever fix it, so no fix is offered.
+3. **A shipped preset exists** → the configuration work is already done.
+4. **Nothing known blocks it** → *untested*, explicitly not a promise, with links
+   to the databases the project's own ratings come from.
+5. **Not in the catalogue** → "I don't have data on this", and the same links.
+
+Fuzzy matching is deliberately gated: below a confidence threshold the advisor
+returns "unknown" rather than the nearest title, because answering a different
+game's question is worse than answering none. A second, higher threshold governs
+"did you mean…?", so nonsense input produces no suggestions at all rather than
+three unrelated games.
+
+Two tests encode the honesty as a property rather than a habit: no catalogue
+entry may claim `runsGreat` without either a native build or a real preset behind
+it, and every definite answer must carry a source. Those hold for all 33 entries,
+and will fail loudly if someone adds an optimistic one.
+
 ### Not sandboxed, and it can't be
 
 EasyPlay's purpose is executing arbitrary third-party binaries from arbitrary

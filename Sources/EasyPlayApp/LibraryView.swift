@@ -44,8 +44,17 @@ struct LibraryView: View {
             return true
         }
         .sheet(isPresented: $showingInstaller) {
-            InstallSheet(preselectedInstaller: droppedInstaller)
-                .onDisappear { droppedInstaller = nil }
+            InstallSheet(preselectedInstaller: droppedInstaller,
+                         preselectedRecipeID: model.pendingInstallPresetID)
+                .onDisappear {
+                    droppedInstaller = nil
+                    model.pendingInstallPresetID = nil
+                }
+        }
+        // Arriving here from an answer in Ask opens the install sheet with that
+        // game's preset already chosen.
+        .onChange(of: model.pendingInstallPresetID) {
+            if model.pendingInstallPresetID != nil { showingInstaller = true }
         }
     }
 

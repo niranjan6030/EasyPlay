@@ -12,6 +12,7 @@ import EasyPlayKit
 final class AppModel {
 
     enum Screen: Hashable {
+        case ask
         case library
         case bottles
         case setup
@@ -41,6 +42,13 @@ final class AppModel {
         let title: String
         let message: String
     }
+
+    /// Shared so every answer in a session comes from one loaded catalogue.
+    let advisor = CompatibilityAdvisor()
+
+    /// Set when the user accepts a preset suggested by the advisor, so the
+    /// library can open the install sheet with it already chosen.
+    var pendingInstallPresetID: String?
 
     var backend: WineBackend? { environment?.preferredBackend }
     var isReady: Bool { environment?.isReady ?? false }
@@ -153,6 +161,12 @@ final class AppModel {
                                    diagnoses: outcome.diagnoses)
             }
         }
+    }
+
+    /// Jumps from an answer straight into installing that game.
+    func startInstall(withPreset recipeID: String) {
+        pendingInstallPresetID = recipeID
+        screen = .library
     }
 
     func removeGame(_ game: InstalledGame) {

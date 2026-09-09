@@ -8,5 +8,6 @@ try RecipeLibraryTests.run()
 try GameStoreTests.run()
 try GraphicsProbeTests.run()
 try WindowsExecutableTests.run()
+try AdvisorTests.run()
 
 exit(Harness.summarise())

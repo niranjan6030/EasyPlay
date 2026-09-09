@@ -24,6 +24,8 @@ func printUsage() {
       easyplay bottle-delete <id>  Delete a bottle and everything in it
       easyplay verify <bottle-id>  Prove a bottle can run a Windows program
 
+      easyplay ask "<question>"    Ask whether a game runs on this Mac
+
       easyplay games               List installed games
       easyplay install <installer.exe> --bottle <id> [--recipe <id>]
                                    Run a Windows installer inside a bottle
@@ -527,6 +529,85 @@ func probeGame(_ arguments: [String]) -> Int32 {
     }
 }
 
+/// The conversational front door. Answers only from the bundled catalogue, and
+/// says so plainly when it has nothing.
+func askAboutGame(_ arguments: [String]) -> Int32 {
+    let question = arguments.joined(separator: " ")
+    guard !question.isEmpty else {
+        print("Usage: easyplay ask \"can I run Elden Ring?\"")
+        return 1
+    }
+
+    let advice = CompatibilityAdvisor().answer(to: question)
+
+    let colour: String
+    switch advice.verdict {
+    case .playNatively, .hasPreset: colour = Colour.green
+    case .willNotRun: colour = Colour.red
+    case .noKnownBlocker: colour = Colour.yellow
+    case .unknown: colour = Colour.dim
+    }
+
+    print("")
+    print("  \(colour)\(Colour.bold)\(advice.headline)\(Colour.reset)")
+    print("")
+    for line in wrap(advice.explanation, width: 74) { print("  \(line)") }
+
+    if !advice.notes.isEmpty {
+        print("")
+        for note in advice.notes {
+            let wrapped = wrap(note, width: 70)
+            for (index, line) in wrapped.enumerated() {
+                print("  \(Colour.dim)\(index == 0 ? "• " : "  ")\(line)\(Colour.reset)")
+            }
+        }
+    }
+
+    if let source = advice.source {
+        print("")
+        print("  \(Colour.dim)Source: \(source)\(Colour.reset)")
+    }
+    if let entry = advice.entry {
+        print("  \(Colour.dim)Last reviewed: \(entry.lastReviewed)\(Colour.reset)")
+    }
+
+    if !advice.actions.isEmpty {
+        print("")
+        for action in advice.actions {
+            switch action.kind {
+            case .openURL(let url):
+                print("  \(Colour.bold)\(action.title)\(Colour.reset)  \(Colour.dim)\(url.absoluteString)\(Colour.reset)")
+            case .installPreset(let recipeID):
+                print("  \(Colour.bold)\(action.title)\(Colour.reset)  \(Colour.dim)easyplay bottle-create \"<name>\" --recipe \(recipeID)\(Colour.reset)")
+            }
+        }
+    }
+
+    if !advice.alternatives.isEmpty {
+        print("")
+        print("  \(Colour.dim)Did you mean: \(advice.alternatives.map(\.title).joined(separator: ", "))?\(Colour.reset)")
+    }
+
+    print("")
+    return advice.verdict == .willNotRun ? 1 : 0
+}
+
+/// Wraps text to a width, so long explanations stay readable in a terminal.
+func wrap(_ text: String, width: Int) -> [String] {
+    var lines: [String] = []
+    var current = ""
+    for word in text.split(separator: " ") {
+        if current.count + word.count + 1 > width {
+            lines.append(current)
+            current = String(word)
+        } else {
+            current += current.isEmpty ? String(word) : " " + word
+        }
+    }
+    if !current.isEmpty { lines.append(current) }
+    return lines
+}
+
 // MARK: - Dispatch
 
 let exitCode: Int32
@@ -543,6 +624,8 @@ case "bottle-delete":
     exitCode = deleteBottle(Array(arguments.dropFirst()))
 case "verify":
     exitCode = verifyBottle(Array(arguments.dropFirst()))
+case "ask":
+    exitCode = askAboutGame(Array(arguments.dropFirst()))
 case "games":
     exitCode = listGames()
 case "install":

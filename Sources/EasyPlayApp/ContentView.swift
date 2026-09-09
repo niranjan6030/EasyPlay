@@ -10,6 +10,8 @@ struct ContentView: View {
         NavigationSplitView {
             List(selection: $model.screen) {
                 Section("Games") {
+                    Label("Ask", systemImage: "bubble.left.and.text.bubble.right")
+                        .tag(AppModel.Screen.ask)
                     Label("Library", systemImage: "gamecontroller")
                         .tag(AppModel.Screen.library)
                 }
@@ -24,6 +26,7 @@ struct ContentView: View {
         } detail: {
             Group {
                 switch model.screen {
+                case .ask: AskView()
                 case .library: LibraryView()
                 case .bottles: BottlesView()
                 case .setup: SetupView()

@@ -9,6 +9,7 @@ import EasyPlayKit
 /// system can read it before pressing the button.
 struct InstallSheet: View {
     var preselectedInstaller: URL?
+    var preselectedRecipeID: String?
 
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -90,6 +91,10 @@ struct InstallSheet: View {
         }
         .frame(width: 560, height: 520)
         .onAppear {
+            if let preselectedRecipeID {
+                selectedRecipeID = preselectedRecipeID
+                if bottleName.isEmpty { bottleName = defaultBottleName }
+            }
             if let preselectedInstaller { adopt(preselectedInstaller) }
         }
         .fileImporter(isPresented: $showingFileImporter,
