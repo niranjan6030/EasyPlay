@@ -138,7 +138,7 @@ MIT — see [LICENSE](LICENSE).
 EasyPlay drives Wine, Game Porting Toolkit, DXVK and Winetricks as external
 processes installed separately through Homebrew. It does not copy, link against
 or redistribute any of them, so their licences apply to those installations
-rather than to this repository.
+rather than to this repository — see [NOTICE.md](NOTICE.md) for the details.
 
 ## Credits
 

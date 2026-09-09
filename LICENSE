@@ -19,15 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-EasyPlay orchestrates other people's software; it does not include it.
-
-Wine (LGPL-2.1), Apple's Game Porting Toolkit and D3DMetal, DXVK (zlib),
-MoltenVK (Apache-2.0) and Winetricks (LGPL-2.1) are installed separately by the
-user through Homebrew, and are driven as external processes. No part of them is
-copied, linked against, or redistributed here, so their licence terms attach to
-those installations rather than to this repository.
-
-The MIT terms above cover this project's own source, presets and documentation.
