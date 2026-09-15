@@ -41,7 +41,17 @@ final class AppModel {
         var messages: [String] = []
         /// Long waits — a Steam download runs for hours — must be abandonable.
         var isCancellable: Bool = false
+        /// 0-1 when the operation can measure itself, e.g. a download.
+        var progress: Double?
     }
+
+    // MARK: - Steam account
+
+    /// The Steam account name, remembered so SteamCMD's cached session can be
+    /// reused. No password is ever held here.
+    var steamUsername: String = EasyPlaySettings.load().steamUsername ?? ""
+    /// nil while unknown or being checked.
+    var steamSignedIn: Bool?
 
     /// Shared with the background thread doing the waiting. A plain Bool would
     /// be read from two threads; this keeps it honest.
@@ -184,17 +194,65 @@ final class AppModel {
     /// The user signs in to Steam themselves — EasyPlay never sees their
     /// credentials — so this spends most of its life waiting, and has to be
     /// cancellable without leaving anything half-built.
+    /// Opens SteamCMD's own sign-in in Terminal. The password and Steam Guard
+    /// code are typed there, straight into Valve's program.
+    func signInToSteam() {
+        let username = steamUsername.trimmingCharacters(in: .whitespaces)
+        guard !username.isEmpty else {
+            alert = AlertContent(title: "Enter your Steam account name",
+                                 message: "Type the account name you sign in to Steam with, then press Sign in to Steam.")
+            return
+        }
+        var settings = EasyPlaySettings.load()
+        settings.steamUsername = username
+        try? settings.save()
+
+        run(title: "Opening Steam sign-in") { report in
+            let steam = SteamCMD()
+            if !steam.isInstalled { try steam.install(onProgress: report) }
+            try steam.openSignInWindow(username: username)
+            report("Sign in in the Terminal window that just opened, then come back here.")
+        }
+        steamSignedIn = nil
+    }
+
+    /// Checks, without prompting, whether SteamCMD holds a session.
+    func refreshSteamStatus() {
+        let username = steamUsername.trimmingCharacters(in: .whitespaces)
+        guard !username.isEmpty else { steamSignedIn = false; return }
+        steamSignedIn = nil
+        Task.detached(priority: .utility) {
+            let signedIn = SteamCMD().isSignedIn(username: username)
+            await MainActor.run { self.steamSignedIn = signedIn }
+        }
+    }
+
+    /// Installs a game sold through Steam, with SteamCMD.
     func installFromSteam(recipe: Recipe, bottleName: String) {
         guard let backend else { return }
+        let username = steamUsername.trimmingCharacters(in: .whitespaces)
+        guard !username.isEmpty else {
+            alert = AlertContent(title: "Sign in to Steam first",
+                                 message: "Enter your Steam account name and press Sign in to Steam, then install.")
+            return
+        }
         let cancellation = self.cancellation
         run(title: "Installing \(recipe.title)", isCancellable: true) { report in
+            let setProgress: (Double) -> Void = { fraction in
+                Task { @MainActor in self.activity?.progress = fraction }
+            }
             let bottle = try BottleManager(backend: backend)
                 .create(name: bottleName, recipe: recipe, onProgress: report)
-            _ = try GameInstaller(backend: backend).installFromSteam(
-                recipe: recipe, into: bottle,
-                shouldContinue: { !cancellation.isCancelled },
-                onProgress: report
-            )
+            do {
+                _ = try GameInstaller(backend: backend).installFromSteam(
+                    recipe: recipe, into: bottle, username: username,
+                    onProgress: report, onPercent: setProgress,
+                    shouldContinue: { !cancellation.isCancelled })
+            } catch InstallError.steamSignInRequired {
+                // Nothing was downloaded, so don't leave an empty bottle behind.
+                try? BottleManager(backend: backend).delete(bottle)
+                throw DisplayError(message: SteamCMDOutput.Failure.needsSignIn.explanation)
+            }
         }
     }
 
@@ -264,11 +322,18 @@ final class AppModel {
                 try manager.setGraphics(graphics, on: &bottle)
                 report("Done. Try playing again.")
             }
-        case .startSteam, .recreateBottle:
-            alert = AlertContent(
-                title: remedy.buttonTitle,
-                message: "This fix isn't automated yet. See the game's preset for what to do by hand."
-            )
+        case .signInToSteam:
+            signInToSteam()
+        case .recreateBottle:
+            // A bottle broken beyond repair is rebuilt from its preset. The game
+            // inside is lost with it, so the user is told to reinstall.
+            let recipe = self.recipe(id: game.recipeID)
+            run(title: "Rebuilding \(bottle.name)") { report in
+                let manager = BottleManager(backend: backend)
+                try manager.delete(bottle)
+                _ = try manager.create(name: bottle.name, recipe: recipe, onProgress: report)
+                report("Rebuilt. Install \(game.title) again to use it.")
+            }
         }
     }
 

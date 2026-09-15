@@ -77,7 +77,13 @@ struct ActivityOverlay: View {
             Rectangle().fill(.regularMaterial).ignoresSafeArea()
 
             VStack(spacing: 16) {
-                ProgressView().controlSize(.large)
+                if let progress = activity.progress {
+                    ProgressView(value: progress)
+                        .progressViewStyle(.linear)
+                        .frame(width: 320)
+                } else {
+                    ProgressView().controlSize(.large)
+                }
                 Text(activity.title).font(.title3.weight(.semibold))
 
                 if let latest = activity.messages.last {

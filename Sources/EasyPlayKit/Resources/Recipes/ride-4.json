@@ -3,8 +3,10 @@
   "id": "ride-4",
   "title": "RIDE 4",
   "publisher": "Milestone S.r.l.",
-  "installerPatterns": ["ride4", "ride_4"],
-
+  "installerPatterns": [
+    "ride4",
+    "ride_4"
+  ],
   "compatibility": {
     "rating": "runsGreat",
     "unsupportedReason": null,
@@ -17,20 +19,17 @@
       "Online multiplayer is untested."
     ]
   },
-
   "requires": {
     "backend": "gamePortingToolkit",
     "rosetta": true,
     "diskGB": 60
   },
-
   "bottle": {
     "windowsVersion": "win10",
     "architecture": "win64",
     "retinaMode": true,
     "dpi": 96
   },
-
   "graphics": {
     "backend": "d3dMetal",
     "dxvk": {
@@ -39,7 +38,6 @@
       "showHUD": false
     }
   },
-
   "dllOverrides": {
     "d3d11": "builtin",
     "d3d12": "builtin",
@@ -47,33 +45,27 @@
     "nvapi": "disabled",
     "nvapi64": "disabled"
   },
-
   "environment": {
     "WINEESYNC": "1",
     "WINEMSYNC": "1",
     "ROSETTA_ADVERTISE_AVX": "1",
     "MTL_HUD_ENABLED": "0"
   },
-
   "winetricks": [],
-
   "install": {
     "kind": "steam",
     "steamAppID": "1259980",
     "installerArguments": [],
     "hints": [
-      "RIDE 4 is sold through Steam, so EasyPlay installs the Steam client into this game's bottle first.",
-      "Sign in to Steam when it appears, then start the RIDE 4 download. EasyPlay takes over again once it finishes.",
-      "The download is roughly 50 GB. Keep the Mac awake and plugged in."
+      "RIDE 4 is sold through Steam. EasyPlay downloads it with Valve's own SteamCMD after you sign in once.",
+      "The download is roughly 50 GB. EasyPlay keeps the Mac awake while it runs."
     ]
   },
-
   "launch": {
     "executableGlob": "**/RIDE4.exe",
     "arguments": [],
     "workingDirectoryFromExecutable": true
   },
-
   "knownIssues": [
     {
       "match": "err:module:import_dll.*(MSVCP140|VCRUNTIME140)",
@@ -95,9 +87,9 @@
     },
     {
       "match": "(Steam|steamclient).*(not running|failed to initialize)",
-      "title": "Steam isn't running",
-      "fix": "RIDE 4 checks for Steam at launch. EasyPlay will start Steam in this bottle first and then retry.",
-      "action": "steam:start"
+      "title": "RIDE 4 needs the Steam client running",
+      "fix": "RIDE 4 checks for the Steam client at launch. The Windows Steam client can't sign in under the free Wine builds for macOS right now, so this can't be fixed from EasyPlay.",
+      "action": null
     }
   ]
 }

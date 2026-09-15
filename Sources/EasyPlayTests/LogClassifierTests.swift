@@ -66,8 +66,10 @@ enum LogClassifierTests {
                            "unknown remedy actions are rejected")
             Harness.expect(Diagnosis.Remedy(action: "graphics:nonsense") == nil,
                            "a remedy naming an unknown translator is rejected")
-            Harness.expect(Diagnosis.Remedy(action: "steam:start") == .startSteam,
+            Harness.expect(Diagnosis.Remedy(action: "steam:signin") == .signInToSteam,
                            "known remedy actions parse")
+            Harness.expect(Diagnosis.Remedy(action: "steam:start") == nil,
+                           "the old start-Steam remedy is gone, because it could never work")
         }
     }
 }

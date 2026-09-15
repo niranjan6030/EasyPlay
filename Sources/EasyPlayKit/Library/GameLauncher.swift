@@ -52,16 +52,7 @@ public struct GameLauncher {
 
         let preflight = self.preflight(executable: executable, recipe: recipe)
 
-        // A Steam game has to start through Steam: the client provides the
-        // Steamworks API the game links against, and launching the executable
-        // directly usually ends in "Steam is not running".
-        let arguments: [String]
-        if let recipe, recipe.install.kind == .steam, let appID = recipe.install.steamAppID {
-            arguments = [SteamInstaller.steamExecutable(in: bottle).path,
-                         "-no-cef-sandbox", "-applaunch", appID] + recipe.launch.arguments
-        } else {
-            arguments = [executable.path] + (recipe?.launch.arguments ?? [])
-        }
+        let arguments = [executable.path] + (recipe?.launch.arguments ?? [])
 
         let result: CommandResult
         do {

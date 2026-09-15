@@ -29,9 +29,11 @@ func printUsage() {
       easyplay games               List installed games
       easyplay install <installer.exe> --bottle <id> [--recipe <id>]
                                    Run a Windows installer inside a bottle
-      easyplay steam-install <recipe-id> [--no-wait] [--hours <n>]
-                                   Install a Steam game: sets up Steam in a new
-                                   bottle, opens it, and waits for your download
+      easyplay steam-signin <username>
+                                   Sign in to Steam once (you type your password
+                                   into Valve's SteamCMD, never into EasyPlay)
+      easyplay steam-install <recipe-id> [--user <username>] [--bottle <id>]
+                                   Download a Steam game with SteamCMD and add it
       easyplay play <game-id> [--seconds <n>]
                                    Launch an installed game
       easyplay probe <game-id> [--seconds <n>]
@@ -611,25 +613,67 @@ func wrap(_ text: String, width: Int) -> [String] {
     return lines
 }
 
-/// Installs a game that is only sold through Steam.
+/// Signs in to Steam through SteamCMD, in this terminal.
 ///
-/// EasyPlay never handles Steam credentials — it opens the client and the user
-/// signs in themselves, then EasyPlay follows the download via Steam's manifest.
-func steamInstall(_ arguments: [String]) -> Int32 {
-    guard let recipeID = arguments.first, !recipeID.hasPrefix("--") else {
-        print("Usage: easyplay steam-install <recipe-id> [--no-wait] [--hours <n>]")
+/// SteamCMD inherits this terminal directly, so the password and Steam Guard
+/// code go straight from the keyboard to Valve's program. EasyPlay stores only
+/// the account name, so later downloads can reuse SteamCMD's cached session.
+func steamSignIn(_ arguments: [String]) -> Int32 {
+    guard let username = arguments.first, !username.hasPrefix("--") else {
+        print("Usage: easyplay steam-signin <steam-account-name>")
         return 1
     }
-    guard let backend = resolveBackend() else { return 1 }
-
-    let recipe: Recipe
+    let steam = SteamCMD()
     do {
-        recipe = try RecipeLibrary().recipe(id: recipeID)
+        if !steam.isInstalled {
+            try steam.install { print("  \($0)") }
+        }
+        var settings = EasyPlaySettings.load()
+        settings.steamUsername = username
+        try settings.save()
     } catch {
         print("\(Colour.red)\(error.localizedDescription)\(Colour.reset)")
         return 1
     }
 
+    print("\n\(Colour.bold)Signing in to Steam as \(username)\(Colour.reset)")
+    print("  \(Colour.dim)Type your password and Steam Guard code when SteamCMD asks. EasyPlay doesn't see them.\(Colour.reset)\n")
+
+    let process = Process()
+    process.executableURL = SteamCMD.script
+    process.arguments = ["+login", username, "+quit"]
+    // Inherit this terminal so input goes to SteamCMD, not through EasyPlay.
+    process.standardInput = FileHandle.standardInput
+    process.standardOutput = FileHandle.standardOutput
+    process.standardError = FileHandle.standardError
+    do { try process.run() } catch {
+        print("\(Colour.red)Couldn't start SteamCMD: \(error.localizedDescription)\(Colour.reset)")
+        return 1
+    }
+    process.waitUntilExit()
+
+    print("")
+    if steam.isSignedIn(username: username) {
+        print("\(Colour.green)Signed in.\(Colour.reset) Steam games can now be installed with 'easyplay steam-install <preset>'.\n")
+        return 0
+    }
+    print("\(Colour.red)That sign-in didn't stick.\(Colour.reset) Run this command again and check the password and Steam Guard code.\n")
+    return 1
+}
+
+/// Installs a game sold through Steam, via SteamCMD.
+func steamInstall(_ arguments: [String]) -> Int32 {
+    guard let recipeID = arguments.first, !recipeID.hasPrefix("--") else {
+        print("Usage: easyplay steam-install <recipe-id> [--user <username>] [--bottle <id>]")
+        return 1
+    }
+    guard let backend = resolveBackend() else { return 1 }
+
+    let recipe: Recipe
+    do { recipe = try RecipeLibrary().recipe(id: recipeID) } catch {
+        print("\(Colour.red)\(error.localizedDescription)\(Colour.reset)")
+        return 1
+    }
     guard recipe.install.kind == .steam, let appID = recipe.install.steamAppID else {
         print("\(Colour.red)\(recipe.title) isn't a Steam game — use 'easyplay install' with its installer.\(Colour.reset)")
         return 1
@@ -639,14 +683,13 @@ func steamInstall(_ arguments: [String]) -> Int32 {
         if let reason = recipe.compatibility.unsupportedReason { print("\n\(reason.explanation)\n") }
         return 1
     }
+    guard let username = value(of: "--user", in: arguments) ?? EasyPlaySettings.load().steamUsername else {
+        print("\n\(Colour.yellow)Sign in to Steam first:\(Colour.reset) easyplay steam-signin <your-steam-account-name>\n")
+        return 1
+    }
 
-    let wait = !arguments.contains("--no-wait")
-    let hours = value(of: "--hours", in: arguments).flatMap(Double.init) ?? 6
-
-    print("\n\(Colour.bold)Installing \(recipe.title) through Steam\(Colour.reset)")
-    print("  \(Colour.dim)Steam app ID \(appID) · needs about \(recipe.requires.diskGB) GB\(Colour.reset)\n")
-    recipe.install.hints.forEach { print("  • \($0)") }
-    if !recipe.install.hints.isEmpty { print("") }
+    print("\n\(Colour.bold)Installing \(recipe.title) from Steam\(Colour.reset)")
+    print("  \(Colour.dim)app \(appID) · account \(username) · about \(recipe.requires.diskGB) GB\(Colour.reset)\n")
 
     do {
         let manager = BottleManager(backend: backend)
@@ -657,19 +700,21 @@ func steamInstall(_ arguments: [String]) -> Int32 {
             bottle = try manager.create(name: recipe.title, recipe: recipe) { print("  \($0)") }
         }
 
+        var lastLine = ""
         let game = try GameInstaller(backend: backend).installFromSteam(
-            recipe: recipe, into: bottle, waitForDownload: wait,
-            timeout: hours * 3600
-        ) { print("  \($0)") }
+            recipe: recipe, into: bottle, username: username
+        ) { message in
+            // Progress lines repeat constantly; only print when they change.
+            guard message != lastLine else { return }
+            lastLine = message
+            print("  \(message)")
+        }
 
         print("\n\(Colour.green)Installed\(Colour.reset) \(game.title)")
         print("  play it with: easyplay play \(game.id)\n")
         return 0
-    } catch let error as InstallError {
-        print("\n\(Colour.yellow)\(error.localizedDescription)\(Colour.reset)\n")
-        if case .steamDownloadIncomplete = error {
-            print("  \(Colour.dim)Steam keeps running in the background. Re-run this command when the download is done.\(Colour.reset)\n")
-        }
+    } catch InstallError.steamSignInRequired {
+        print("\n\(Colour.yellow)Steam needs you to sign in.\(Colour.reset) Run: easyplay steam-signin \(username)\n")
         return 1
     } catch {
         print("\n\(Colour.red)\(error.localizedDescription)\(Colour.reset)\n")
@@ -699,6 +744,8 @@ case "games":
     exitCode = listGames()
 case "install":
     exitCode = installGame(Array(arguments.dropFirst()))
+case "steam-signin":
+    exitCode = steamSignIn(Array(arguments.dropFirst()))
 case "steam-install":
     exitCode = steamInstall(Array(arguments.dropFirst()))
 case "play":

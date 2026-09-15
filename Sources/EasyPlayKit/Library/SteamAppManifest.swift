@@ -33,26 +33,16 @@ public struct SteamAppManifest: Equatable {
         return min(1, Double(bytesDownloaded) / Double(bytesToDownload))
     }
 
-    public static func manifestURL(appID: String, in bottle: Bottle) -> URL {
-        steamAppsDirectory(in: bottle).appendingPathComponent("appmanifest_\(appID).acf")
+    /// Where SteamCMD leaves the manifest: `steamapps/` inside the directory
+    /// the game was installed into.
+    public static func manifestURL(appID: String, installDirectory: URL) -> URL {
+        installDirectory
+            .appendingPathComponent("steamapps", isDirectory: true)
+            .appendingPathComponent("appmanifest_\(appID).acf")
     }
 
-    public static func steamAppsDirectory(in bottle: Bottle) -> URL {
-        bottle.driveC
-            .appendingPathComponent("Program Files (x86)/Steam/steamapps", isDirectory: true)
-    }
-
-    /// The folder Steam put the game in, if it has one yet.
-    public func installedGameDirectory(in bottle: Bottle) -> URL? {
-        guard let installDirectory else { return nil }
-        let url = Self.steamAppsDirectory(in: bottle)
-            .appendingPathComponent("common", isDirectory: true)
-            .appendingPathComponent(installDirectory, isDirectory: true)
-        return FileManager.default.fileExists(atPath: url.path) ? url : nil
-    }
-
-    public static func load(appID: String, in bottle: Bottle) -> SteamAppManifest? {
-        let url = manifestURL(appID: appID, in: bottle)
+    public static func load(appID: String, installDirectory: URL) -> SteamAppManifest? {
+        let url = manifestURL(appID: appID, installDirectory: installDirectory)
         guard let text = try? String(contentsOf: url, encoding: .utf8) else { return nil }
         return parse(text, fallbackAppID: appID)
     }

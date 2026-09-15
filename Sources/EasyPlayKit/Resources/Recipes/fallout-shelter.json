@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "id": "fallout-shelter",
+  "title": "Fallout Shelter",
+  "installerPatterns": [
+    "falloutshelter",
+    "fallout_shelter"
+  ],
+  "publisher": "Bethesda Softworks",
+  "compatibility": {
+    "rating": "untested",
+    "unsupportedReason": null,
+    "lastVerified": null,
+    "source": "Free on Steam, Windows-only, no known anti-cheat; not yet verified",
+    "notes": [
+      "Free to play, so this is the preset used to prove the Steam install path end to end without buying anything.",
+      "Windows-only on Steam, which is what makes it a real test: a game with a native Mac build would not need EasyPlay at all."
+    ]
+  },
+  "requires": {
+    "backend": "gamePortingToolkit",
+    "rosetta": true,
+    "diskGB": 3
+  },
+  "bottle": {
+    "windowsVersion": "win10",
+    "architecture": "win64",
+    "retinaMode": true,
+    "dpi": 96
+  },
+  "graphics": {
+    "backend": "d3dMetal",
+    "dxvk": null
+  },
+  "dllOverrides": {
+    "d3d11": "builtin",
+    "d3d10core": "builtin",
+    "dxgi": "builtin",
+    "nvapi": "disabled",
+    "nvapi64": "disabled"
+  },
+  "environment": {
+    "WINEESYNC": "1",
+    "WINEMSYNC": "1",
+    "ROSETTA_ADVERTISE_AVX": "1",
+    "MTL_HUD_ENABLED": "0"
+  },
+  "winetricks": [],
+  "install": {
+    "kind": "steam",
+    "steamAppID": "588430",
+    "installerArguments": [],
+    "hints": [
+      "Fallout Shelter is free: add it to your Steam library once, then EasyPlay downloads it with SteamCMD.",
+      "The download is around 1 GB."
+    ]
+  },
+  "launch": {
+    "executableGlob": "**/Fallout*Shelter*.exe",
+    "arguments": [],
+    "workingDirectoryFromExecutable": true
+  },
+  "knownIssues": [
+    {
+      "match": "err:d3d.*(no adapters|failed to create device)",
+      "title": "DirectX couldn't start",
+      "fix": "The DirectX-to-Metal layer didn't load. Switching this game to the built-in renderer usually gets past it.",
+      "action": "graphics:wineD3D"
+    }
+  ]
+}

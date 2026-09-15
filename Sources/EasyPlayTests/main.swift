@@ -10,5 +10,6 @@ try GraphicsProbeTests.run()
 try WindowsExecutableTests.run()
 try AdvisorTests.run()
 try SteamTests.run()
+try SteamCMDTests.run()
 
 exit(Harness.summarise())

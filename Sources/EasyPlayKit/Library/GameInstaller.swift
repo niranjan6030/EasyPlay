@@ -4,8 +4,7 @@ public enum InstallError: LocalizedError {
     case installerFailed(log: String, diagnoses: [Diagnosis])
     case executableNotFound(glob: String)
     case unsupportedGame(Recipe)
-    case steamNotInstalled
-    case steamDownloadIncomplete(appID: String, state: SteamInstaller.State)
+    case steamSignInRequired
 
     public var errorDescription: String? {
         switch self {
@@ -16,20 +15,8 @@ public enum InstallError: LocalizedError {
         case .unsupportedGame(let recipe):
             return recipe.compatibility.unsupportedReason?.explanation
                 ?? "\(recipe.title) can't run on a Mac."
-        case .steamNotInstalled:
-            return "Steam isn't in this bottle yet."
-        case .steamDownloadIncomplete(_, let state):
-            switch state {
-            case .steamNotInstalled:
-                return "Steam isn't in this bottle, so the download can't be followed."
-            case .notStarted:
-                return "Steam never started downloading this game. Sign in to Steam and begin the download, then try again."
-            case .downloading(let progress):
-                let percent = progress.map { " (\(Int($0 * 100))% done)" } ?? ""
-                return "The download hadn't finished\(percent). EasyPlay stopped waiting, but Steam will carry on - come back when it's done."
-            case .installed:
-                return "The download finished after all."
-            }
+        case .steamSignInRequired:
+            return SteamCMDOutput.Failure.needsSignIn.explanation
         }
     }
 }
@@ -123,20 +110,26 @@ public struct GameInstaller {
         return game
     }
 
-    /// Installs a game that is only sold through Steam.
+    /// Folder inside a bottle that a Steam game is downloaded into.
+    public static func steamInstallDirectory(for recipe: Recipe, in bottle: Bottle) -> URL {
+        let folder = recipe.title.filter { $0.isLetter || $0.isNumber || $0 == " " || $0 == "-" }
+        return bottle.driveC
+            .appendingPathComponent("Games", isDirectory: true)
+            .appendingPathComponent(folder.isEmpty ? recipe.id : folder, isDirectory: true)
+    }
+
+    /// Installs a game sold through Steam, using Valve's native macOS SteamCMD.
     ///
-    /// The shape of this is dictated by the one thing EasyPlay must not do:
-    /// handle the user's Steam credentials. So it installs the client, opens the
-    /// game's install page, and then *waits* — reading Steam's own manifest to
-    /// see when the download finishes — while the user signs in and clicks
-    /// Install themselves.
+    /// Fails fast: if the account isn't signed in, this says so immediately
+    /// rather than starting a download that can only fail. EasyPlay never sees
+    /// the password — signing in happens in SteamCMD's own window.
     @discardableResult
     public func installFromSteam(recipe: Recipe,
                                  into bottle: Bottle,
-                                 waitForDownload: Bool = true,
-                                 timeout: TimeInterval = 6 * 3600,
-                                 shouldContinue: @escaping () -> Bool = { true },
-                                 onProgress: ProgressHandler? = nil) throws -> InstalledGame {
+                                 username: String,
+                                 onProgress: ProgressHandler? = nil,
+                                 onPercent: ((Double) -> Void)? = nil,
+                                 shouldContinue: @escaping () -> Bool = { true }) throws -> InstalledGame {
 
         if recipe.compatibility.rating == .notSupported {
             throw InstallError.unsupportedGame(recipe)
@@ -145,40 +138,37 @@ public struct GameInstaller {
             throw InstallError.executableNotFound(glob: "a Steam app ID in the \(recipe.title) preset")
         }
 
-        let steam = SteamInstaller(backend: backend, runner: runner)
-        try steam.installSteam(into: bottle, recipe: recipe, onProgress: onProgress)
-
-        onProgress?("Opening Steam. Sign in, then start the \(recipe.title) download.")
-        _ = try steam.requestInstall(appID: appID, in: bottle, recipe: recipe)
-
-        guard waitForDownload else {
-            throw InstallError.steamDownloadIncomplete(
-                appID: appID, state: steam.state(appID: appID, in: bottle))
+        let steam = SteamCMD(runner: runner)
+        if !steam.isInstalled {
+            try steam.install(onProgress: onProgress)
         }
 
-        let manifest = try steam.waitForGame(
-            appID: appID, in: bottle, timeout: timeout,
-            shouldContinue: shouldContinue
-        ) { state in
-            switch state {
-            case .steamNotInstalled: onProgress?("Waiting for Steam…")
-            case .notStarted: onProgress?("Waiting for you to start the download in Steam…")
-            case .downloading(let progress):
-                onProgress?(progress.map { "Downloading \(recipe.title) — \(Int($0 * 100))%" }
-                            ?? "Downloading \(recipe.title)…")
-            case .installed: onProgress?("Download finished.")
-            }
+        onProgress?("Checking your Steam sign-in…")
+        guard steam.isSignedIn(username: username) else {
+            throw InstallError.steamSignInRequired
         }
 
-        // Prefer searching inside the folder Steam reported, so a bottle holding
-        // several games can't return the wrong executable.
-        let executable = ExecutableFinder().find(glob: recipe.launch.executableGlob, in: bottle)
-        guard let executable else {
+        let directory = Self.steamInstallDirectory(for: recipe, in: bottle)
+        let finder = ExecutableFinder()
+        let before = finder.snapshot(of: bottle)
+
+        onProgress?("Downloading \(recipe.title) from Steam…")
+        do {
+            try steam.download(appID: appID, into: directory, username: username,
+                               onProgress: onProgress, onPercent: onPercent,
+                               shouldContinue: shouldContinue)
+        } catch let error as SteamCMD.SteamCMDError where error.failure == .needsSignIn {
+            throw InstallError.steamSignInRequired
+        }
+
+        guard let executable = finder.find(glob: recipe.launch.executableGlob, in: bottle, ignoring: before)
+                ?? finder.find(glob: recipe.launch.executableGlob, in: bottle) else {
             throw InstallError.executableNotFound(glob: recipe.launch.executableGlob)
         }
 
+        let manifest = SteamAppManifest.load(appID: appID, installDirectory: directory)
         let game = InstalledGame(
-            title: manifest.name ?? recipe.title,
+            title: manifest?.name ?? recipe.title,
             bottleID: bottle.id,
             recipeID: recipe.id,
             executableRelativePath: executable.path.replacingOccurrences(of: bottle.url.path + "/", with: ""),

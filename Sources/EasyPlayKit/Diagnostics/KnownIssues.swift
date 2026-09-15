@@ -10,7 +10,7 @@ public struct Diagnosis: Identifiable, Equatable {
         /// Switch this game to a different graphics translator.
         case switchGraphics(GraphicsBackend)
         /// Start Steam inside the bottle before retrying.
-        case startSteam
+        case signInToSteam
         /// Rebuild the bottle from scratch.
         case recreateBottle
 
@@ -18,7 +18,7 @@ public struct Diagnosis: Identifiable, Equatable {
             switch self {
             case .installWinetricksVerb(let verb): return "Install \(verb)"
             case .switchGraphics(let backend): return "Switch to \(backend.displayName)"
-            case .startSteam: return "Start Steam"
+            case .signInToSteam: return "Sign in to Steam"
             case .recreateBottle: return "Rebuild bottle"
             }
         }
@@ -30,7 +30,7 @@ public struct Diagnosis: Identifiable, Equatable {
             case ("graphics", let name?):
                 guard let backend = GraphicsBackend(rawValue: name) else { return nil }
                 self = .switchGraphics(backend)
-            case ("steam", "start"): self = .startSteam
+            case ("steam", "signin"): self = .signInToSteam
             case ("bottle", "recreate"): self = .recreateBottle
             default: return nil
             }
@@ -126,11 +126,11 @@ enum GlobalKnownIssues {
             action: nil
         ),
         Pattern(
-            id: "steam-not-running",
-            regex: #"(steamclient|Steam).*(not running|failed to initial|SteamAPI_Init)"#,
-            title: "Steam isn't running",
-            explanation: "This game checks for Steam when it starts. EasyPlay can launch Steam inside this bottle first.",
-            action: "steam:start"
+            id: "steam-client-required",
+            regex: #"(steamclient|Steam).*(not running|failed to initial|SteamAPI_Init)|SteamAPI_RestartAppIfNecessary"#,
+            title: "This game needs the Steam client running",
+            explanation: "Some games refuse to start unless the Steam client is running alongside them. The Windows Steam client can't sign in under the free Wine builds available for macOS right now, so EasyPlay can't provide it for this game. If there's a Mac version, get that; otherwise CrossOver can run the Steam client.",
+            action: nil
         ),
         Pattern(
             id: "out-of-disk",

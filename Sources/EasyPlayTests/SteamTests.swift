@@ -59,22 +59,31 @@ enum SteamTests {
         }
 
         Harness.suite("Steam paths and routing") {
-            let bottle = Bottle(name: "RIDE 4 test")
-            let steamExe = SteamInstaller.steamExecutable(in: bottle)
-            Harness.expect(steamExe.path.hasSuffix("drive_c/Program Files (x86)/Steam/steam.exe"),
-                           "Steam is looked for where its installer puts it")
-            Harness.expect(SteamAppManifest.manifestURL(appID: "1259980", in: bottle)
-                            .path.hasSuffix("steamapps/appmanifest_1259980.acf"),
-                           "the manifest path matches Steam's layout")
+            let dir = URL(fileURLWithPath: "/tmp/bottle/drive_c/Games/RIDE 4")
+            Harness.expect(SteamAppManifest.manifestURL(appID: "1259980", installDirectory: dir)
+                            .path.hasSuffix("Games/RIDE 4/steamapps/appmanifest_1259980.acf"),
+                           "the manifest is read from where SteamCMD writes it")
 
-            // EasyPlay downloads Steam from Valve and nowhere else.
-            Harness.expect(SteamInstaller.installerURL.host?.hasSuffix("steamstatic.com") == true,
-                           "the installer comes from Valve's own CDN")
+            // EasyPlay downloads SteamCMD from Valve and nowhere else.
+            Harness.expect(SteamCMD.downloadURL.host?.hasSuffix("akamaihd.net") == true
+                            && SteamCMD.downloadURL.path.contains("steamcmd_osx"),
+                           "SteamCMD comes from Valve's own CDN, macOS build")
 
             if let ride4 = try? RecipeLibrary().recipe(id: "ride-4") {
-                Harness.expect(ride4.install.kind == .steam, "RIDE 4 is routed through Steam")
-                Harness.expect(ride4.install.steamAppID != nil, "and carries the app ID that routing needs")
+                let bottle = Bottle(name: "RIDE 4 test")
+                Harness.expect(GameInstaller.steamInstallDirectory(for: ride4, in: bottle)
+                                .path.hasSuffix("drive_c/Games/RIDE 4"),
+                               "Steam games are downloaded into their own bottle")
+                Harness.expect(ride4.install.steamAppID != nil, "the preset carries the app ID routing needs")
             }
+
+            // The Windows Steam client can't sign in under free Wine on macOS,
+            // so no remedy may offer to start it.
+            let advice = LogClassifier().classify(log: "SteamAPI_Init() failed; Steam is not running", exitCode: 1)
+            Harness.expect(advice.first?.id == "steam-client-required",
+                           "a game that needs the Steam client is recognised")
+            Harness.expect(advice.first?.remedy == nil,
+                           "and no fix is offered, because starting the Windows client cannot work")
         }
     }
 }

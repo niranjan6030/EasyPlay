@@ -782,6 +782,30 @@
       "antiCheatScope": "wholeGame"
     },
     {
+      "id": "fallout-shelter",
+      "title": "Fallout Shelter",
+      "aliases": [
+        "fallout shelter"
+      ],
+      "publisher": "Bethesda Softworks",
+      "store": {
+        "kind": "steam",
+        "id": "588430",
+        "url": null
+      },
+      "macNative": false,
+      "antiCheat": null,
+      "antiCheatScope": null,
+      "graphicsAPI": [],
+      "presetID": "fallout-shelter",
+      "verdict": "untested",
+      "source": "Steam platform data, checked 2026-09-10",
+      "lastReviewed": "2026-09-10",
+      "notes": [
+        "Free to play, and Windows-only on Steam - EasyPlay ships a preset for it."
+      ]
+    },
+    {
       "id": "final-fantasy-xiv",
       "title": "FINAL FANTASY XIV Online",
       "aliases": [

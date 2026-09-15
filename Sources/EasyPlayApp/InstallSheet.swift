@@ -25,17 +25,52 @@ struct InstallSheet: View {
     private var isSteamGame: Bool { recipe?.install.kind == .steam }
 
     private var steamExplanation: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        @Bindable var model = model
+        return VStack(alignment: .leading, spacing: 10) {
             Label("This game is sold through Steam", systemImage: "cart")
                 .font(.callout.weight(.medium))
-            Text("There's no installer file to choose. EasyPlay will set up Steam in this game's bottle and open it. Sign in and start the download yourself — EasyPlay never sees your Steam password — and it will pick up again once the download finishes.")
+            Text("There's no installer to choose. EasyPlay downloads the game with Valve's own SteamCMD after you sign in once. Your password and Steam Guard code go into Valve's sign-in window, never into EasyPlay.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("You can close the progress window at any time; Steam keeps downloading.")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+
+            HStack(spacing: 8) {
+                TextField("Steam account name", text: $model.steamUsername)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 220)
+                    .onSubmit { model.refreshSteamStatus() }
+                Button("Sign in to Steam") { model.signInToSteam() }
+                Button {
+                    model.refreshSteamStatus()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .help("Check sign-in")
+            }
+
+            Group {
+                switch model.steamSignedIn {
+                case .some(true):
+                    Label("Signed in — ready to install", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                case .some(false):
+                    Label("Not signed in yet", systemImage: "person.crop.circle.badge.exclamationmark")
+                        .foregroundStyle(.orange)
+                case .none:
+                    Label("Checking…", systemImage: "hourglass")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .font(.caption)
+
+            if recipe?.compatibility.rating != .runsGreat {
+                Text("Free games must be in your Steam library first: open the game's store page and press Play Game or Add to Library once.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .onAppear { model.refreshSteamStatus() }
     }
 
     var body: some View {
@@ -112,7 +147,9 @@ struct InstallSheet: View {
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(isSteamGame ? recipe == nil : installerURL == nil)
+                .disabled(isSteamGame
+                          ? (recipe == nil || model.steamSignedIn != true)
+                          : installerURL == nil)
             }
             .padding(16)
         }
