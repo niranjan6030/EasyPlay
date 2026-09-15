@@ -70,6 +70,16 @@ enum ExecutableFinderTests {
             Harness.expect(!names.contains("xtool.exe"),
                            "an installer's temp-directory extractor is not mistaken for the game")
 
+            // Regression: the bottle health check targets Wine's own Minesweeper
+            // in windows/system32. Skipping system programs while guessing must
+            // not stop a preset that names one on purpose.
+            guard let mine = makeBottle([("windows/system32/winemine.exe", 200_000, old)]) else { return }
+            defer { try? FileManager.default.removeItem(at: mine.url) }
+            Harness.expect(finder.find(glob: "**/winemine.exe", in: mine) == nil,
+                           "a guessing search skips Windows' own programs")
+            Harness.expect(finder.find(glob: "**/winemine.exe", in: mine, skippingSupportFiles: false) != nil,
+                           "a preset naming a system program still finds it")
+
             // An install that added nothing must find nothing.
             guard let empty = makeBottle([("windows/syswow64/cmd.exe", 1_007_616, old)]) else { return }
             defer { try? FileManager.default.removeItem(at: empty.url) }

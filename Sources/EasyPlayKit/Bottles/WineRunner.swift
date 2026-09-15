@@ -117,6 +117,20 @@ public struct WineRunner {
         )
     }
 
+    /// Applies a batch of registry values in a single Wine launch, then waits
+    /// for Wine to flush them to disk so the change is durable before returning.
+    public func apply(_ patch: RegistryPatch) throws {
+        guard !patch.isEmpty else { return }
+        let file = FileManager.default.temporaryDirectory
+            .appendingPathComponent("easyplay-\(UUID().uuidString).reg")
+        try patch.regFileContents.write(to: file, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: file) }
+
+        _ = try run(["regedit", "/S", file.path], verbosity: .play, timeout: 180)
+        _ = try runner.run(backend.wineserver.path, ["-w"],
+                           environment: ["WINEPREFIX": bottle.url.path], timeout: 60)
+    }
+
     /// Writes a registry value into the bottle.
     @discardableResult
     public func setRegistryValue(key: String, name: String, value: String,

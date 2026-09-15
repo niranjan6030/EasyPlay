@@ -48,8 +48,13 @@ public struct ExecutableFinder {
     /// preserve the original dates from their archives — 7-Zip's writes files
     /// dated 2023, creation date included — so "newer than when we started"
     /// silently rejects the real game.
-    public func find(glob: String, in bottle: Bottle, ignoring: Set<String> = []) -> URL? {
-        candidates(glob: glob, in: bottle, ignoring: ignoring)
+    ///
+    /// `skippingSupportFiles` should be false when a preset names a program
+    /// deliberately — the bottle health check targets Wine's own Minesweeper in
+    /// `windows/system32`, which the guessing heuristics would otherwise hide.
+    public func find(glob: String, in bottle: Bottle, ignoring: Set<String> = [],
+                     skippingSupportFiles: Bool = true) -> URL? {
+        candidates(glob: glob, in: bottle, ignoring: ignoring, skippingSupportFiles: skippingSupportFiles)
             .max { size(of: $0) < size(of: $1) }
     }
 
@@ -66,7 +71,8 @@ public struct ExecutableFinder {
         return paths
     }
 
-    public func candidates(glob: String, in bottle: Bottle, ignoring: Set<String> = []) -> [URL] {
+    public func candidates(glob: String, in bottle: Bottle, ignoring: Set<String> = [],
+                           skippingSupportFiles: Bool = true) -> [URL] {
         guard let regex = Self.regex(forGlob: glob),
               let enumerator = fileManager.enumerator(
                   at: bottle.driveC,
@@ -77,7 +83,7 @@ public struct ExecutableFinder {
         var matches: [URL] = []
         for case let fileURL as URL in enumerator {
             guard fileURL.pathExtension.lowercased() == "exe" else { continue }
-            guard !isSystemOrSupportExecutable(fileURL, in: bottle) else { continue }
+            if skippingSupportFiles, isSystemOrSupportExecutable(fileURL, in: bottle) { continue }
             guard !ignoring.contains(fileURL.path) else { continue }
             // Match against the Windows-side path so globs in presets read the
             // way a Windows user would write them.

@@ -63,11 +63,53 @@ public struct BottleManager {
 
     // MARK: - Creation
 
+    /// A freshly booted, untouched Windows environment for this engine. New
+    /// bottles are APFS clones of it: a clone takes well under a second and no
+    /// extra disk until something changes, where booting a fresh environment
+    /// took 20-60 seconds every time. Keyed by engine version, so upgrading the
+    /// engine builds a new template instead of reusing a stale one.
+    var templateURL: URL {
+        let version = backend.version.filter { $0.isLetter || $0.isNumber || $0 == "." }
+        return AppPaths.runtimesDirectory
+            .appendingPathComponent("Templates", isDirectory: true)
+            .appendingPathComponent("\(backend.kind.rawValue)-\(version)", isDirectory: true)
+    }
+
+    private func ensureTemplate(onProgress: ProgressHandler?) throws {
+        let ready = templateURL.appendingPathComponent(".easyplay-template-ready")
+        if fileManager.fileExists(atPath: ready.path) { return }
+
+        onProgress?("Preparing a Windows environment (first time only)…")
+        try? fileManager.removeItem(at: templateURL)
+        try fileManager.createDirectory(at: templateURL, withIntermediateDirectories: true)
+
+        let template = Bottle(id: templateURL.lastPathComponent, name: "template", backendKind: backend.kind)
+        var environment = WineRunner(backend: backend, bottle: template, runner: runner).environment()
+        environment["WINEPREFIX"] = templateURL.path
+        _ = try runner.run(backend.wine64.path, ["wineboot", "--init"], environment: environment, timeout: 600)
+        _ = try runner.run(backend.wineserver.path, ["-w"],
+                           environment: ["WINEPREFIX": templateURL.path], timeout: 120)
+
+        guard fileManager.fileExists(atPath: templateURL.appendingPathComponent("drive_c/windows").path) else {
+            try? fileManager.removeItem(at: templateURL)
+            throw BottleError.initialisationFailed("Wine couldn't create a Windows environment.")
+        }
+        fileManager.createFile(atPath: ready.path, contents: nil)
+    }
+
+    /// Copies the template into place, as an APFS clone where the disk allows.
+    private func cloneTemplate(to destination: URL) throws {
+        // cp -c requests a clone; on a filesystem without clones it fails and an
+        // ordinary copy is made instead.
+        let cloned = try runner.run("/bin/cp", ["-cR", templateURL.path, destination.path], timeout: 600)
+        if !cloned.succeeded {
+            try? fileManager.removeItem(at: destination)
+            try fileManager.copyItem(at: templateURL, to: destination)
+        }
+        try? fileManager.removeItem(at: destination.appendingPathComponent(".easyplay-template-ready"))
+    }
+
     /// Creates a bottle and applies a recipe to it.
-    ///
-    /// Wine's own `wineboot --init` does the heavy lifting; everything after it
-    /// is the per-game configuration a user would otherwise apply by hand in
-    /// `winecfg` and `regedit`.
     public func create(name: String,
                        recipe: Recipe? = nil,
                        onProgress: ProgressHandler? = nil) throws -> Bottle {
@@ -86,24 +128,18 @@ public struct BottleManager {
             backendKind: backend.kind
         )
 
-        try fileManager.createDirectory(at: bottle.url, withIntermediateDirectories: true)
+        try ensureTemplate(onProgress: onProgress)
+        onProgress?("Creating a fresh Windows environment…")
+        try cloneTemplate(to: bottle.url)
 
         let wine = WineRunner(backend: backend, bottle: bottle, runner: runner)
-
-        onProgress?("Creating a fresh Windows environment…")
-        // First boot lays down the fake C: drive, registry and system DLLs. It is
-        // slow (tens of seconds) and Wine reports progress only on stderr.
-        let boot = try wine.run(["wineboot", "--init"], verbosity: .diagnostic, timeout: 600)
-        guard boot.succeeded || bottle.exists else {
-            try? fileManager.removeItem(at: bottle.url)
-            throw BottleError.initialisationFailed(boot.combinedOutput.suffix(400).description)
-        }
-
         if let recipe {
             try apply(recipe, to: &bottle, using: wine, onProgress: onProgress)
         } else {
             onProgress?("Applying default settings…")
-            try wine.setRegistryValue(key: #"HKCU\Software\Wine"#, name: "Version", value: bottle.windowsVersion)
+            var patch = RegistryPatch()
+            patch.set(#"HKEY_CURRENT_USER\Software\Wine"#, "Version", bottle.windowsVersion)
+            try wine.apply(patch)
         }
 
         try save(bottle)
@@ -119,26 +155,8 @@ public struct BottleManager {
                       onProgress: ProgressHandler? = nil) throws {
         let wine = wine ?? WineRunner(backend: backend, bottle: bottle, runner: runner)
 
-        onProgress?("Telling Windows programs this is \(recipe.bottle.windowsVersion)…")
-        try wine.setRegistryValue(key: #"HKCU\Software\Wine"#,
-                                  name: "Version", value: recipe.bottle.windowsVersion)
-
-        if recipe.bottle.retinaMode {
-            onProgress?("Turning on Retina display support…")
-            try wine.setRegistryValue(key: #"HKCU\Software\Wine\Mac Driver"#,
-                                      name: "RetinaMode", value: "y")
-        }
-
-        // Overrides are written into the registry as well as passed through the
-        // environment: the environment covers processes EasyPlay launches, the
-        // registry covers anything the game launches for itself.
-        if !recipe.dllOverrides.isEmpty {
-            onProgress?("Configuring graphics libraries…")
-            for (dll, value) in recipe.dllOverrides.sorted(by: { $0.key < $1.key }) {
-                try wine.setRegistryValue(key: #"HKCU\Software\Wine\DllOverrides"#,
-                                          name: dll, value: value)
-            }
-        }
+        onProgress?("Applying the \(recipe.title) settings…")
+        try wine.apply(RegistryPatch.forRecipe(recipe))
 
         for verb in recipe.winetricks {
             onProgress?("Installing \(verb) (this can take a few minutes)…")
@@ -160,9 +178,11 @@ public struct BottleManager {
     /// Changes which DirectX translator a bottle uses, and records the change.
     public func setGraphics(_ graphics: GraphicsBackend, on bottle: inout Bottle) throws {
         let wine = WineRunner(backend: backend, bottle: bottle, runner: runner)
+        var patch = RegistryPatch()
         for (dll, value) in wine.graphicsOverrides(for: graphics).sorted(by: { $0.key < $1.key }) {
-            try wine.setRegistryValue(key: #"HKCU\Software\Wine\DllOverrides"#, name: dll, value: value)
+            patch.set(#"HKEY_CURRENT_USER\Software\Wine\DllOverrides"#, dll, value)
         }
+        try wine.apply(patch)
         bottle.graphicsBackend = graphics
         try save(bottle)
     }

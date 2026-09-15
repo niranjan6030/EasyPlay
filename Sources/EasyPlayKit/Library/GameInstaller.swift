@@ -185,7 +185,10 @@ public struct GameInstaller {
     public func registerExistingGame(in bottle: Bottle,
                                      recipe: Recipe,
                                      title: String? = nil) throws -> InstalledGame {
-        guard let executable = ExecutableFinder().find(glob: recipe.launch.executableGlob, in: bottle) else {
+        // The preset names this program on purpose, so it is looked for even
+        // where the install-time guessing heuristics would skip it.
+        guard let executable = ExecutableFinder().find(glob: recipe.launch.executableGlob, in: bottle,
+                                                       skippingSupportFiles: false) else {
             throw InstallError.executableNotFound(glob: recipe.launch.executableGlob)
         }
         let game = InstalledGame(
