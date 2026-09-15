@@ -11,6 +11,7 @@ try WindowsExecutableTests.run()
 try AdvisorTests.run()
 try SteamTests.run()
 try SteamCMDTests.run()
+try SteamSignInSecurityTests.run()
 try RegistryPatchTests.run()
 
 exit(Harness.summarise())

@@ -116,15 +116,41 @@ public struct SteamCMD {
         return signedIn
     }
 
+    /// The shell command that runs SteamCMD's sign-in with typing hidden.
+    ///
+    /// SteamCMD redirects its stderr to a log file, and its `password:` prompt
+    /// goes with it — so the terminal never shows a prompt and never switches
+    /// to hidden input, and a password typed at the blank cursor is printed on
+    /// screen in plain text. That happened to a real user. So echo is switched
+    /// off before SteamCMD starts, restored on every exit path including
+    /// Ctrl+C, and EasyPlay prints the instructions SteamCMD's hidden prompt
+    /// would have shown. EasyPlay still never reads the input: it goes from the
+    /// keyboard to SteamCMD through the terminal.
+    public static func hiddenSignInCommand(username: String) -> String {
+        let safeName = username.filter { $0.isLetter || $0.isNumber || $0 == "_" || $0 == "." || $0 == "-" }
+        let script = Self.script.path.replacingOccurrences(of: "'", with: "'\\''")
+        return [
+            "trap 'stty echo 2>/dev/null' EXIT INT TERM",
+            "stty -echo",
+            "echo 'Typing is hidden for this sign-in, so nothing will appear as you type.'",
+            "echo 'When SteamCMD finishes starting (after \"Cached credentials not found\"):'",
+            "echo '  1. type your Steam password and press Enter'",
+            "echo '  2. type your Steam Guard code and press Enter, or approve on your phone'",
+            "echo",
+            "'\(script)' +login \(safeName) +quit",
+            "stty echo",
+        ].joined(separator: "; ")
+    }
+
     /// Opens Terminal running SteamCMD's own sign-in for this account.
     ///
     /// The user types their password and Steam Guard code into SteamCMD
     /// directly. EasyPlay only ever supplies the account name.
     public func openSignInWindow(username: String) throws {
         guard isInstalled else { throw SteamCMDError.notInstalled }
-        let safeName = username.filter { $0.isLetter || $0.isNumber || $0 == "_" || $0 == "." || $0 == "-" }
-        let command = "clear; echo 'Sign in to Steam for EasyPlay. Type your password and Steam Guard code below.'; echo; "
-            + "'\(Self.script.path)' +login \(safeName) +quit; "
+        let command = "clear; /bin/bash -c \"" + Self.hiddenSignInCommand(username: username)
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"") + "\"; "
             + "echo; echo 'You can close this window and return to EasyPlay.'"
         let script = """
         tell application "Terminal"

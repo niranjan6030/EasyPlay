@@ -47,3 +47,24 @@ enum SteamCMDTests {
         }
     }
 }
+
+/// A real user's Steam password appeared on screen during sign-in, because
+/// SteamCMD's hidden prompt never switched the terminal to hidden input.
+enum SteamSignInSecurityTests {
+    static func run() throws {
+        Harness.suite("Steam sign-in hides typing") {
+            let cmd = SteamCMD.hiddenSignInCommand(username: "niranjan_63")
+            let parts = cmd.components(separatedBy: "; ")
+            let echoOff = parts.firstIndex(of: "stty -echo")
+            let steam = parts.firstIndex { $0.contains("steamcmd.sh") }
+            Harness.expect(echoOff != nil, "typing is switched to hidden before sign-in")
+            Harness.expect(echoOff != nil && steam != nil && echoOff! < steam!,
+                           "and it happens before SteamCMD starts reading input")
+            Harness.expect(parts.first?.hasPrefix("trap 'stty echo") == true,
+                           "visible typing is restored on every exit, including Ctrl+C")
+            Harness.expect(cmd.contains("+login niranjan_63 +quit"), "the account name is passed through")
+            Harness.expect(!SteamCMD.hiddenSignInCommand(username: "x; rm -rf ~").contains("; rm"),
+                           "an account name can't smuggle in a shell command")
+        }
+    }
+}

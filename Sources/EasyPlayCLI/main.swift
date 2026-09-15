@@ -637,11 +637,12 @@ func steamSignIn(_ arguments: [String]) -> Int32 {
     }
 
     print("\n\(Colour.bold)Signing in to Steam as \(username)\(Colour.reset)")
-    print("  \(Colour.dim)Type your password and Steam Guard code when SteamCMD asks. EasyPlay doesn't see them.\(Colour.reset)\n")
+    print("  \(Colour.dim)EasyPlay doesn't see your password: it goes straight to Valve's SteamCMD.\(Colour.reset)\n")
 
+    // Typing is hidden for the whole sign-in; see SteamCMD.hiddenSignInCommand.
     let process = Process()
-    process.executableURL = SteamCMD.script
-    process.arguments = ["+login", username, "+quit"]
+    process.executableURL = URL(fileURLWithPath: "/bin/bash")
+    process.arguments = ["-c", SteamCMD.hiddenSignInCommand(username: username)]
     // Inherit this terminal so input goes to SteamCMD, not through EasyPlay.
     process.standardInput = FileHandle.standardInput
     process.standardOutput = FileHandle.standardOutput
