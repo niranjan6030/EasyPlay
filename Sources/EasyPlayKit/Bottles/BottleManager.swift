@@ -109,6 +109,27 @@ public struct BottleManager {
         try? fileManager.removeItem(at: destination.appendingPathComponent(".easyplay-template-ready"))
     }
 
+    public func bottle(named name: String) -> Bottle? {
+        list().first { $0.name.caseInsensitiveCompare(name) == .orderedSame }
+    }
+
+    /// Returns the bottle already made for this game, or creates one.
+    ///
+    /// Retrying an install is the normal response to a failure, and it used to
+    /// fail again immediately with "a bottle with that name already exists".
+    /// `created` tells the caller whether it may clean the bottle up after a
+    /// failure — a bottle that already held the user's files must never be
+    /// deleted because a retry didn't work out.
+    public func createOrReuse(name: String, recipe: Recipe?,
+                              onProgress: ProgressHandler? = nil) throws -> (bottle: Bottle, created: Bool) {
+        if var existing = bottle(named: name) {
+            onProgress?("Using the existing \(existing.name) bottle.")
+            if let recipe { try apply(recipe, to: &existing, onProgress: onProgress) }
+            return (existing, false)
+        }
+        return (try create(name: name, recipe: recipe, onProgress: onProgress), true)
+    }
+
     /// Creates a bottle and applies a recipe to it.
     public func create(name: String,
                        recipe: Recipe? = nil,

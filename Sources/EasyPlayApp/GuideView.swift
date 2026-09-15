@@ -65,7 +65,7 @@ struct GuideView: View {
             ),
             Step(
                 title: "Install it",
-                body: "Go to Library and press Install a game, or just drag the installer onto the window. EasyPlay recognises the game from the filename where it can, creates an isolated Windows environment for it, applies the right settings, and runs the installer. For games sold through Steam there's no file to choose: EasyPlay installs Steam, opens it for you to sign in, and waits for the download.",
+                body: "Go to Library and press Install a game, or just drag the installer onto the window. EasyPlay recognises the game from the filename where it can, creates an isolated Windows environment for it, applies the right settings, and runs the installer. For games sold through Steam there's no file to choose: sign in to Steam once, and EasyPlay downloads the game with Valve's own SteamCMD, showing real progress.",
                 icon: "square.and.arrow.down",
                 action: ("Open Library", .library)
             ),
@@ -92,7 +92,9 @@ struct GuideView: View {
                 limit("Games with kernel-level anti-cheat",
                       "VALORANT, Fortnite, Apex Legends, Destiny 2 and similar titles load a Windows kernel driver. Wine provides Windows' user space, not its kernel, so these can never work — on EasyPlay, CrossOver, or anything else. Trying to bypass it risks your account, so EasyPlay refuses by name.")
                 limit("Sign in to Steam for you",
-                      "For games sold through Steam, EasyPlay installs the Steam client into the bottle and opens it — but you sign in yourself, in Steam's own window. EasyPlay never sees your password or your two-factor code. It waits and picks up again once your download finishes.")
+                      "Signing in happens once, in Valve's SteamCMD running in a Terminal window: you type your password and Steam Guard code there, and EasyPlay never sees them. After that, Steam games download without you.")
+                limit("Run games that need the Steam client open",
+                      "A few Steam games refuse to start unless the Steam client is running. The Windows Steam client can't sign in under the free Wine builds for macOS, so those games won't launch. EasyPlay recognises the error and says so.")
                 limit("Supply games",
                       "EasyPlay only installs games you already own. It points you at official stores and nowhere else.")
                 limit("Guarantee an untested game works",

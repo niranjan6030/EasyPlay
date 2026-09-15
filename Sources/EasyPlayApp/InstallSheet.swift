@@ -35,7 +35,9 @@ struct InstallSheet: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 8) {
-                TextField("Steam account name", text: $model.steamUsername)
+                TextField("Steam account name", text: $model.steamUsername,
+                          prompt: Text("Steam account name"))
+                    .labelsHidden()
                     .textFieldStyle(.roundedBorder)
                     .frame(maxWidth: 220)
                     .onSubmit { model.refreshSteamStatus() }

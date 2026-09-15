@@ -119,8 +119,11 @@ Wine is installed — which a portable preset cannot know.
 "install": { "kind": "steam", "steamAppID": "1259980" }
 ```
 
-RIDE 4 has no standalone installer. EasyPlay installs the Steam client into the
-bottle, the user signs in and downloads the game, and EasyPlay resumes.
+RIDE 4 has no standalone installer. EasyPlay downloads its Windows build with
+Valve's SteamCMD after the user has signed in once, then finds `RIDE4.exe` in
+the bottle. RIDE 4 checks for the Steam client when it starts, and the Windows
+Steam client cannot sign in under free Wine on macOS, so the preset's known
+issues say that plainly if the game refuses to launch.
 
 > The app ID is **1259980**. A plausible-looking 1024650 is Port Royale 4 — this
 > was caught by a unit test during development, which is why the assertion is

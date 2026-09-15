@@ -160,7 +160,8 @@ swift run easyplay recipes ride-4         # inspect one
 swift run easyplay bottle-create "RIDE 4" --recipe ride-4
 swift run easyplay verify <bottle-id>     # prove the bottle runs Windows programs
 swift run easyplay install setup.exe --bottle <id>
-swift run easyplay steam-install ride-4     # sets up Steam, waits for the download
+swift run easyplay steam-signin <account>   # once: you type your password into SteamCMD
+swift run easyplay steam-install fallout-shelter
 swift run easyplay games
 swift run easyplay play <game-id>
 ```
@@ -193,13 +194,18 @@ Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
   log, asserting that Wine's harmless shortcut-builder errors raise no false
   alarm
 
-Steam installs work: EasyPlay downloads Valve's installer, sets Steam up inside
-the game's bottle, opens it at the game's install page, then follows the download
-by reading Steam's own `appmanifest_*.acf` until it reports fully installed.
-Verified on this Mac up to the sign-in handoff — the client installs, launches and
-pulls its own update inside the bottle. **EasyPlay never handles Steam
-credentials**: you sign in in Steam's window, so the last leg of that flow is by
-design something only you can complete.
+Steam games install through **SteamCMD**, Valve's own command-line client, which
+runs natively on macOS. You sign in once in a Terminal window running SteamCMD
+itself — **EasyPlay never sees your password or Steam Guard code** — and after that
+EasyPlay downloads the Windows build of a game into its bottle with live
+progress, keeps the Mac awake, and stops with an explanation if Steam makes no
+progress for ten minutes. Verified end to end on this Mac with an anonymously
+downloadable Valve app: sign-in check, progress, Windows files in the bottle,
+manifest read, and the game registered in the library.
+
+New bottles are **APFS clones of a template**, so after the very first one
+(about 30 seconds) each new bottle takes about 10 seconds instead of a full
+Windows boot.
 
 Known gaps, stated rather than buried:
 

@@ -386,7 +386,7 @@ func installGame(_ arguments: [String]) -> Int32 {
         } else {
             let name = recipe?.title ?? installerURL.deletingPathExtension().lastPathComponent
             print("\nNo bottle given, so creating one called \"\(name)\".\n")
-            bottle = try manager.create(name: name, recipe: recipe) { print("  \($0)") }
+            bottle = try manager.createOrReuse(name: name, recipe: recipe) { print("  \($0)") }.bottle
         }
 
         print("")
@@ -697,7 +697,7 @@ func steamInstall(_ arguments: [String]) -> Int32 {
         if let bottleID = value(of: "--bottle", in: arguments) {
             bottle = try manager.bottle(id: bottleID)
         } else {
-            bottle = try manager.create(name: recipe.title, recipe: recipe) { print("  \($0)") }
+            bottle = try manager.createOrReuse(name: recipe.title, recipe: recipe) { print("  \($0)") }.bottle
         }
 
         var lastLine = ""

@@ -231,31 +231,44 @@ out of a test failure rather than a design session: GTA V carries BattlEye, but
 only in GTA Online, so "has kernel anti-cheat" and "is blocked" had to become
 different questions — hence `antiCheatScope`.
 
-### The Steam flow is shaped by what EasyPlay refuses to touch
+### The Steam flow, and the version that didn't work
 
 Most modern PC games have no `setup.exe` — they are a Steam library entry, so
 supporting only standalone installers means supporting almost nothing anyone
 wants to play.
 
-The obvious implementation automates the whole thing, credentials included. That
-is off the table: EasyPlay does not handle a user's Steam password or their
-two-factor code, and any design that "just" types them somewhere is wrong.
+The first version installed the **Windows** Steam client into each bottle, opened
+it, and waited while the user signed in. In real use it never got past sign-in:
+the window stayed black and the wait ran for an hour. Reading Steam's own logs
+showed why. The client's interface is a Chromium page that talks to the client
+over a WebSocket on `127.0.0.1`; the TCP connection is accepted, then the
+handshake fails with Windows socket error **10045** (`WSAEOPNOTSUPP`). That
+reproduced identically on three engines — Game Porting Toolkit's Wine 7.7, Wine
+11.17 staging, and a Wine 9 built from CrossOver 24 source. An unimplemented
+socket operation isn't something a flag or a setting can fix.
 
-So the flow is deliberately interrupted. EasyPlay installs Valve's client into
-the bottle unattended, opens it at `steam://install/<appid>`, and then *waits* —
-polling Steam's own `appmanifest_<appid>.acf` until `StateFlags` reports fully
-installed. The user signs in and clicks Install in Steam's own window; EasyPlay
-resumes on the other side.
+So EasyPlay stopped running Steam under Wine at all. **SteamCMD**, Valve's
+command-line client, runs natively on macOS, has no browser interface, and can
+fetch the Windows build of a game onto a Mac with
+`+@sSteamCmdForcePlatformType windows`. That is everything EasyPlay needs from
+Steam.
 
-Reading the manifest rather than watching for files matters: a half-downloaded
-50 GB game has plenty of files and none of them mean it is ready. The manifest
-also survives the subtler case — Steam keeps the installed flag set during an
-update, so `isFullyInstalled` requires the flag *and* no outstanding bytes. That
-distinction is unit-tested, because getting it wrong means launching a game
-that is still downloading.
+Credentials still never pass through EasyPlay. Signing in happens in a Terminal
+window running SteamCMD itself; SteamCMD caches the session, and EasyPlay stores
+only the account name. Every automated SteamCMD run gets a closed standard input,
+so if the session has expired the password prompt ends the run immediately and
+the user is sent to sign in — instead of a download hanging forever on a prompt
+nobody can see.
 
-Because the wait is measured in hours, it is cancellable, and Steam keeps
-downloading after EasyPlay stops watching. Re-running the command picks it up.
+The download is watched, not waited on: real byte counts drive a progress bar,
+a `caffeinate` assertion keeps the Mac awake for exactly as long as SteamCMD
+runs, and ten minutes without progress stops the download with an explanation.
+The lesson from the first version was that a silent hour is the worst possible
+failure mode, so the new flow is built to fail within minutes and say why.
+
+The trade-off, stated plainly: games that refuse to start unless the Steam client
+is running can't be launched this way. EasyPlay recognises that error and says
+so rather than offering a fix that can't work.
 
 ### Not sandboxed, and it can't be
 
@@ -267,10 +280,8 @@ of this kind, and it is stated rather than glossed over.
 
 ## Where it goes next
 
-- **Steam-first installs.** Most modern PC games, RIDE 4 included, are not a
-  setup file. The recipe schema already models this (`install.kind == .steam`
-  plus an app ID); the flow that installs Steam into a bottle and waits for the
-  download is the remaining work.
+- **Games that need the Steam client running.** SteamCMD downloads them, but they
+  won't launch without the client, which can't sign in under free Wine today.
 - **DXVK provisioning.** The recipe field and DLL overrides are implemented;
   downloading a DXVK release and installing its DLLs into a bottle is not.
 - **Preset verification.** Ratings currently come from CrossOver's database.

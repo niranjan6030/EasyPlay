@@ -241,16 +241,17 @@ final class AppModel {
             let setProgress: (Double) -> Void = { fraction in
                 Task { @MainActor in self.activity?.progress = fraction }
             }
-            let bottle = try BottleManager(backend: backend)
-                .create(name: bottleName, recipe: recipe, onProgress: report)
+            let (bottle, created) = try BottleManager(backend: backend)
+                .createOrReuse(name: bottleName, recipe: recipe, onProgress: report)
             do {
                 _ = try GameInstaller(backend: backend).installFromSteam(
                     recipe: recipe, into: bottle, username: username,
                     onProgress: report, onPercent: setProgress,
                     shouldContinue: { !cancellation.isCancelled })
             } catch InstallError.steamSignInRequired {
-                // Nothing was downloaded, so don't leave an empty bottle behind.
-                try? BottleManager(backend: backend).delete(bottle)
+                // Nothing was downloaded. Remove the bottle only if this attempt
+                // made it — an existing one may hold the user's other files.
+                if created { try? BottleManager(backend: backend).delete(bottle) }
                 throw DisplayError(message: SteamCMDOutput.Failure.needsSignIn.explanation)
             }
         }
@@ -260,7 +261,7 @@ final class AppModel {
         guard let backend else { return }
         run(title: "Installing \(recipe?.title ?? url.lastPathComponent)") { report in
             let manager = BottleManager(backend: backend)
-            let bottle = try manager.create(name: bottleName, recipe: recipe, onProgress: report)
+            let bottle = try manager.createOrReuse(name: bottleName, recipe: recipe, onProgress: report).bottle
             _ = try GameInstaller(backend: backend)
                 .install(installerAt: url, into: bottle, recipe: recipe, onProgress: report)
         }
