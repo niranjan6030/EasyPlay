@@ -55,7 +55,7 @@ enum SteamSignInSecurityTests {
         Harness.suite("Steam sign-in hides typing") {
             let cmd = SteamCMD.hiddenSignInCommand(username: "niranjan_63")
             let parts = cmd.components(separatedBy: "; ")
-            let echoOff = parts.firstIndex(of: "stty -echo")
+            let echoOff = parts.firstIndex { $0.hasPrefix("stty -echo") }
             let steam = parts.firstIndex { $0.contains("steamcmd.sh") }
             Harness.expect(echoOff != nil, "typing is switched to hidden before sign-in")
             Harness.expect(echoOff != nil && steam != nil && echoOff! < steam!,
@@ -65,6 +65,19 @@ enum SteamSignInSecurityTests {
             Harness.expect(cmd.contains("+login niranjan_63 +quit"), "the account name is passed through")
             Harness.expect(!SteamCMD.hiddenSignInCommand(username: "x; rm -rf ~").contains("; rm"),
                            "an account name can't smuggle in a shell command")
+            Harness.expect(cmd.contains("stty -echo 2>/dev/null || {") && cmd.contains("exit 1"),
+                           "if typing can't be hidden, sign-in stops before SteamCMD asks for a password")
+
+            // The panel that displayed a real password even with echo off.
+            Harness.expect(SteamCMD.signInRefusalReason(environment: ["TERM_PROGRAM": "claude-desktop"],
+                                                        inputIsTerminal: true) != nil,
+                           "sign-in refuses to run in Claude's terminal panel")
+            Harness.expect(SteamCMD.signInRefusalReason(environment: ["TERM_PROGRAM": "Apple_Terminal"],
+                                                        inputIsTerminal: false) != nil,
+                           "sign-in refuses when input isn't a real terminal")
+            Harness.expect(SteamCMD.signInRefusalReason(environment: ["TERM_PROGRAM": "Apple_Terminal"],
+                                                        inputIsTerminal: true) == nil,
+                           "sign-in is allowed in the Terminal app")
         }
     }
 }

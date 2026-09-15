@@ -131,7 +131,7 @@ public struct SteamCMD {
         let script = Self.script.path.replacingOccurrences(of: "'", with: "'\\''")
         return [
             "trap 'stty echo 2>/dev/null' EXIT INT TERM",
-            "stty -echo",
+            "stty -echo 2>/dev/null || { echo 'EasyPlay could not hide typing in this window, so it stopped before asking for your password. Open the Terminal app and run the sign-in there.'; exit 1; }",
             "echo 'Typing is hidden for this sign-in, so nothing will appear as you type.'",
             "echo 'When SteamCMD finishes starting (after \"Cached credentials not found\"):'",
             "echo '  1. type your Steam password and press Enter'",
@@ -140,6 +140,25 @@ public struct SteamCMD {
             "'\(script)' +login \(safeName) +quit",
             "stty echo",
         ].joined(separator: "; ")
+    }
+
+    /// Whether this process may run an interactive sign-in at all.
+    ///
+    /// Some embedded terminals draw every keystroke themselves, so switching
+    /// the terminal to hidden input does nothing there: a Steam password typed
+    /// into Claude's terminal panel was shown on screen even with echo off.
+    /// Sign-in therefore only runs in a real terminal that isn't one of those.
+    /// Returns a reason to refuse, or nil when it's safe.
+    public static func signInRefusalReason(environment: [String: String] = ProcessInfo.processInfo.environment,
+                                           inputIsTerminal: Bool = isatty(STDIN_FILENO) == 1) -> String? {
+        let program = environment["TERM_PROGRAM"]?.lowercased() ?? ""
+        if program.contains("claude") || environment["CLAUDECODE"] != nil {
+            return "This panel shows everything you type, including a password. Open the Terminal app (press Command-Space, type Terminal) and run the sign-in there."
+        }
+        if !inputIsTerminal {
+            return "Sign-in needs a real terminal window so your password can be typed hidden. Open the Terminal app and run it there."
+        }
+        return nil
     }
 
     /// Opens Terminal running SteamCMD's own sign-in for this account.

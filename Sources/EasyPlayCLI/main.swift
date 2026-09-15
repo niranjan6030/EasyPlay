@@ -623,6 +623,13 @@ func steamSignIn(_ arguments: [String]) -> Int32 {
         print("Usage: easyplay steam-signin <steam-account-name>")
         return 1
     }
+    // Refuse before anything else: a password must never be typed somewhere
+    // that shows it.
+    if let reason = SteamCMD.signInRefusalReason() {
+        print("\n\(Colour.red)Not signing in here.\(Colour.reset) \(reason)\n")
+        return 1
+    }
+
     let steam = SteamCMD()
     do {
         if !steam.isInstalled {
