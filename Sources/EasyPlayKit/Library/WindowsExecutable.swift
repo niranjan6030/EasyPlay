@@ -74,7 +74,10 @@ public extension WineBackend {
         switch translator {
         case .wineD3D:
             return true
-        case .d3dMetal, .dxvk:
+        case .d3dMetal:
+            // D3DMetal is an x86_64-only framework that only this engine carries.
+            return kind == .gamePortingToolkit && architecture.is64Bit
+        case .dxvk:
             return architecture.is64Bit
         }
     }

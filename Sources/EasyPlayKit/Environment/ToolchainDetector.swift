@@ -43,6 +43,33 @@ public struct EnvironmentReport {
     public var isReady: Bool { !checks.contains { $0.status == .blocked } }
 
     public var blockers: [EnvironmentCheck] { checks.filter { $0.status == .blocked } }
+
+    /// The engine of a given kind, or the preferred one when it isn't installed.
+    public func backend(for kind: WineBackend.Kind?) -> WineBackend? {
+        guard let kind else { return preferredBackend }
+        return backends.first { $0.kind == kind } ?? preferredBackend
+    }
+
+    /// The engine a bottle was built with, so it keeps using the same one.
+    public func backend(for bottle: Bottle) -> WineBackend? { backend(for: bottle.backendKind) }
+
+    /// Which engine suits this game.
+    ///
+    /// The Game Porting Toolkit is the only engine with D3DMetal, so 64-bit
+    /// DirectX games belong there. Everything else — and every 32-bit game,
+    /// which cannot use D3DMetal and crashes on that engine's 2022 Wine — runs
+    /// better on the modern Wine.
+    public func backend(for recipe: Recipe?, architecture: WindowsExecutable.Architecture = .unknown) -> WineBackend? {
+        if let required = recipe?.requires.backend { return backend(for: required) }
+        // Measured on real games: every 32-bit game crashes on the Game Porting
+        // Toolkit's 2022 Wine, and 32-bit code can't reach D3DMetal anyway. A
+        // 64-bit game is the opposite — Cortex Command runs there and crashes on
+        // the modern Wine. So architecture decides, not preference.
+        if architecture == .x86, let modern = backends.first(where: { $0.kind == .wineStaging }) {
+            return modern
+        }
+        return backend(for: .gamePortingToolkit)
+    }
     public var warnings: [EnvironmentCheck] { checks.filter { $0.status == .warning } }
 }
 
@@ -58,6 +85,8 @@ public struct ToolchainDetector {
     /// the build with working DirectX 11/12.
     private static let knownBundles: [(kind: WineBackend.Kind, appPath: String, translators: Set<GraphicsBackend>)] = [
         (.gamePortingToolkit, "/Applications/Game Porting Toolkit.app", [.d3dMetal, .wineD3D]),
+        (.wineStaging, AppPaths.runtimesDirectory.appendingPathComponent("Wine Staging.app").path, [.wineD3D]),
+        (.wineStaging, "/Applications/Wine Staging.app", [.wineD3D]),
         (.wineHQ, "/Applications/Wine Staging.app", [.wineD3D]),
         (.wineHQ, "/Applications/Wine Devel.app", [.wineD3D]),
         (.wineHQ, "/Applications/Wine Stable.app", [.wineD3D]),
@@ -123,7 +152,7 @@ public struct ToolchainDetector {
         // resolved first: Homebrew links the Game Porting Toolkit binaries into
         // its own bin directory, and without resolving we would report the same
         // installation twice under two different names.
-        for name in ["wine64", "wine"] {
+        for name in ["wine64", "wine"] where ProcessRunner.locate(name) != nil {
             guard let executable = ProcessRunner.locate(name) else { continue }
             let binDirectory = executable
                 .resolvingSymlinksInPath()

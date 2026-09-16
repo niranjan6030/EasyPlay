@@ -86,7 +86,7 @@ public struct BottleManager {
         let template = Bottle(id: templateURL.lastPathComponent, name: "template", backendKind: backend.kind)
         var environment = WineRunner(backend: backend, bottle: template, runner: runner).environment()
         environment["WINEPREFIX"] = templateURL.path
-        _ = try runner.run(backend.wine64.path, ["wineboot", "--init"], environment: environment, timeout: 600)
+        _ = try runner.run(backend.wineExecutable.path, ["wineboot", "--init"], environment: environment, timeout: 600)
         _ = try runner.run(backend.wineserver.path, ["-w"],
                            environment: ["WINEPREFIX": templateURL.path], timeout: 120)
 
@@ -216,7 +216,7 @@ public struct BottleManager {
             "winetricks", ["-q", verb],
             environment: [
                 "WINEPREFIX": bottle.url.path,
-                "WINE": backend.wine64.path,
+                "WINE": backend.wineExecutable.path,
                 "WINESERVER": backend.wineserver.path,
             ],
             timeout: 1800

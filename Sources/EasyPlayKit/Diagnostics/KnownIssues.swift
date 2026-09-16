@@ -133,6 +133,13 @@ enum GlobalKnownIssues {
             action: nil
         ),
         Pattern(
+            id: "wine-crash",
+            regex: #"Unhandled exception code|Unhandled page fault|Assertion failed:|err:seh:NtRaiseException|invalid frame"#,
+            title: "The game crashed",
+            explanation: "The game started and then crashed inside Windows compatibility. That is usually the engine rather than the game: 32-bit games need the modern Wine engine, and 64-bit DirectX games need the Game Porting Toolkit. EasyPlay picks by the game's architecture, so if this keeps happening the other engine is worth a try.",
+            action: nil
+        ),
+        Pattern(
             id: "out-of-disk",
             regex: #"(No space left on device|ENOSPC|disk full)"#,
             title: "Out of disk space",

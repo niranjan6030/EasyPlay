@@ -12,6 +12,10 @@ public struct WineBackend: Identifiable, Equatable {
         /// Wine bundled with D3DMetal. The recommended backend on Apple Silicon.
         case gamePortingToolkit
         /// An official WineHQ build (stable / devel / staging).
+        /// A current upstream Wine (staging) build. Years newer than the Game
+        /// Porting Toolkit's Wine, and the only one here whose 32-bit support
+        /// works: every 32-bit game tested crashes on GPTK's Wine 7.7.
+        case wineStaging
         case wineHQ
         /// A Wine on PATH that we didn't recognise, or one the user pointed us at.
         case custom
@@ -19,6 +23,7 @@ public struct WineBackend: Identifiable, Equatable {
         public var displayName: String {
             switch self {
             case .gamePortingToolkit: return "Game Porting Toolkit"
+            case .wineStaging: return "Wine Staging"
             case .wineHQ: return "WineHQ"
             case .custom: return "Custom Wine"
             }
@@ -42,7 +47,12 @@ public struct WineBackend: Identifiable, Equatable {
 
     public var id: String { binDirectory.path }
 
-    public var wine64: URL { binDirectory.appendingPathComponent("wine64") }
+    /// Older builds ship `wine64`; current ones ship a single `wine`.
+    public var wineExecutable: URL {
+        let wine64 = binDirectory.appendingPathComponent("wine64")
+        return FileManager.default.isExecutableFile(atPath: wine64.path)
+            ? wine64 : binDirectory.appendingPathComponent("wine")
+    }
     public var wineserver: URL { binDirectory.appendingPathComponent("wineserver") }
 
     public var displayName: String { "\(kind.displayName) \(version)" }
@@ -58,7 +68,7 @@ public struct WineBackend: Identifiable, Equatable {
             return binDirectory
                 .deletingLastPathComponent()
                 .appendingPathComponent("lib/external", isDirectory: true)
-        case .wineHQ, .custom:
+        case .wineStaging, .wineHQ, .custom:
             return nil
         }
     }

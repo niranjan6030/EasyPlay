@@ -26,6 +26,10 @@ public struct ExecutableFinder {
     ]
 
     /// Executables installers routinely leave beside a game.
+    /// Matched anywhere in the name, because games prefix them freely:
+    /// Cave Story's settings tool is `DoConfig.exe`, Spelunky's is `config.exe`.
+    private static let notAGameAnywhere = ["config", "unins", "crashreport", "crashhandler"]
+
     private static let notAGame = [
         "unins", "uninstall", "setup", "vcredist", "vc_redist", "dxsetup",
         "dotnetfx", "directx", "crashreport", "crashhandler", "cefprocess",
@@ -56,6 +60,31 @@ public struct ExecutableFinder {
                      skippingSupportFiles: Bool = true) -> URL? {
         candidates(glob: glob, in: bottle, ignoring: ignoring, skippingSupportFiles: skippingSupportFiles)
             .max { size(of: $0) < size(of: $1) }
+    }
+
+    /// Executables inside one folder, likeliest game first.
+    ///
+    /// Used when a game is added from a zip or folder: the game's own files are
+    /// known exactly, so there is no need to search the whole bottle.
+    public func executables(in directory: URL) -> [URL] {
+        guard let enumerator = fileManager.enumerator(
+            at: directory, includingPropertiesForKeys: [.totalFileAllocatedSizeKey],
+            options: [.skipsHiddenFiles]) else { return [] }
+        var found: [URL] = []
+        for case let url as URL in enumerator where url.pathExtension.lowercased() == "exe" {
+            found.append(url)
+        }
+        let isSupport: (URL) -> Bool = { url in
+            let name = url.deletingPathExtension().lastPathComponent.lowercased()
+            return Self.notAGame.contains { name.hasPrefix($0) }
+                || Self.notAGameAnywhere.contains { name.contains($0) }
+        }
+        // Real candidates first, largest first; support tools last but still
+        // listed, so a user can pick one deliberately.
+        return found.sorted { a, b in
+            if isSupport(a) != isSupport(b) { return !isSupport(a) }
+            return size(of: a) > size(of: b)
+        }
     }
 
     /// Every executable currently in the bottle, for diffing after an install.
@@ -108,6 +137,7 @@ public struct ExecutableFinder {
 
         let name = url.deletingPathExtension().lastPathComponent.lowercased()
         return Self.notAGame.contains { name.hasPrefix($0) }
+            || Self.notAGameAnywhere.contains { name.contains($0) }
     }
 
     private func size(of url: URL) -> Int {

@@ -88,6 +88,17 @@ final class AppModel {
     var pendingInstallPresetID: String?
 
     var backend: WineBackend? { environment?.preferredBackend }
+
+    /// The engine a bottle was built with. A bottle made for a 32-bit game runs
+    /// on the modern Wine, and driving it with a different engine breaks it.
+    func engine(for bottle: Bottle) -> WineBackend? {
+        environment?.backend(for: bottle) ?? backend
+    }
+
+    /// The engine that suits a game about to be installed.
+    func engine(for recipe: Recipe?, architecture: WindowsExecutable.Architecture) -> WineBackend? {
+        environment?.backend(for: recipe, architecture: architecture) ?? backend
+    }
     var isReady: Bool { environment?.isReady ?? false }
 
     // MARK: - Loading
@@ -160,7 +171,7 @@ final class AppModel {
     }
 
     func deleteBottle(_ bottle: Bottle) {
-        guard let backend else { return }
+        guard let backend = engine(for: bottle) else { return }
         run(title: "Deleting \(bottle.name)") { _ in
             // BottleManager also clears the library entries that pointed here.
             try BottleManager(backend: backend).delete(bottle)
@@ -170,7 +181,7 @@ final class AppModel {
     /// Runs a Windows program in a bottle to prove it works, before the user
     /// commits to a long install.
     func verifyBottle(_ bottle: Bottle) {
-        guard let backend else { return }
+        guard let backend = engine(for: bottle) else { return }
         run(title: "Checking \(bottle.name)") { report in
             let recipe = try RecipeLibrary().recipe(id: "winemine")
             report("Looking for a Windows program to run…")
@@ -257,20 +268,39 @@ final class AppModel {
         }
     }
 
+    /// Installs from an installer, a zip, or a game folder.
+    ///
+    /// A zip or folder is unpacked and inspected first: whether the game is 32-
+    /// or 64-bit decides which engine its bottle needs, so that has to be known
+    /// before the bottle is made.
     func install(installerAt url: URL, recipe: Recipe?, bottleName: String) {
-        guard let backend else { return }
+        guard let fallback = backend else { return }
+        let detected = environment
         run(title: "Installing \(recipe?.title ?? url.lastPathComponent)") { report in
-            let manager = BottleManager(backend: backend)
+            var prepared: GameInstaller.PreparedGame?
+            if GameInstaller.isImportable(url) {
+                prepared = try GameInstaller(backend: fallback)
+                    .prepare(source: url, title: bottleName, recipe: recipe, onProgress: report)
+            }
+            let engine = detected?.backend(for: recipe,
+                                           architecture: prepared?.architecture ?? .unknown) ?? fallback
+            report("Using the \(engine.displayName) engine.")
+
+            let manager = BottleManager(backend: engine)
             let bottle = try manager.createOrReuse(name: bottleName, recipe: recipe, onProgress: report).bottle
-            _ = try GameInstaller(backend: backend)
-                .install(installerAt: url, into: bottle, recipe: recipe, onProgress: report)
+            let installer = GameInstaller(backend: engine)
+            if let prepared {
+                _ = try installer.importPrepared(prepared, into: bottle, recipe: recipe, onProgress: report)
+            } else {
+                _ = try installer.install(installerAt: url, into: bottle, recipe: recipe, onProgress: report)
+            }
         }
     }
 
     // MARK: - Playing
 
     func play(_ game: InstalledGame) {
-        guard let backend, let bottle = bottle(id: game.bottleID) else { return }
+        guard let bottle = bottle(id: game.bottleID), let backend = engine(for: bottle) else { return }
         let recipe = recipe(id: game.recipeID)
 
         diagnosedGame = game

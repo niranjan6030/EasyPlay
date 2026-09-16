@@ -6,6 +6,9 @@ public struct LaunchOutcome {
     public let logURL: URL?
     /// Empty when the game ran and quit normally.
     public let diagnoses: [Diagnosis]
+    /// True when the game was still running and the time limit stopped it —
+    /// the good outcome for a check, and a different thing from quitting.
+    public var stoppedByTimeout: Bool = false
 
     public var succeeded: Bool { exitCode == 0 && diagnoses.isEmpty }
 }
@@ -66,11 +69,15 @@ public struct GameLauncher {
             // rather than failing, which is exactly when saying so matters most.
             try? store.update(id: game.id) { $0.lastPlayedAt = Date() }
             _ = try? wine.shutdown()
-            return LaunchOutcome(game: game, exitCode: 0, logURL: nil, diagnoses: preflight)
+            return LaunchOutcome(game: game, exitCode: 0, logURL: nil, diagnoses: preflight,
+                                 stoppedByTimeout: true)
         }
 
         try? store.update(id: game.id) { $0.lastPlayedAt = Date() }
 
+        // Wine often exits 0 after the Windows program inside it has crashed,
+        // so the log decides as well as the exit code. EasyPlay reporting a
+        // crash as "ran and exited cleanly" is worse than reporting nothing.
         let diagnoses = preflight + LogClassifier(recipe: recipe)
             .classify(log: result.combinedOutput, exitCode: result.exitCode)
 

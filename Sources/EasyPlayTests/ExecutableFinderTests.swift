@@ -108,3 +108,58 @@ enum ExecutableFinderTests {
         }
     }
 }
+
+/// Where a game's program ends up once its folder is moved into a bottle.
+enum ImportPathTests {
+    static func run() throws {
+        Harness.suite("Import path maths") {
+            let bottle = Bottle(id: "b1", name: "Cave Story")
+            let destination = bottle.driveC.appendingPathComponent("Games/Cave Story")
+
+            // The case that broke a real install: macOS reports a temporary
+            // folder as /var/… while files inside it resolve to /private/var/…,
+            // so replacing one path inside the other mangled the result.
+            let folder = URL(fileURLWithPath: "/var/folders/xy/easyplay-import-1")
+            let exe = URL(fileURLWithPath: "/private/var/folders/xy/easyplay-import-1/CaveStory/Doukutsu.exe")
+            let rel = GameInstaller.relativePath(of: exe, movedFrom: folder, to: destination, in: bottle)
+            Harness.expectEqual(rel, "drive_c/Games/Cave Story/CaveStory/Doukutsu.exe",
+                                "the program's path survives the move")
+            Harness.expect(!rel.hasPrefix("/"), "the stored path is relative to the bottle")
+
+            // A program at the top of the folder, no subdirectory.
+            let flat = URL(fileURLWithPath: "/var/folders/xy/easyplay-import-1/iji.exe")
+            Harness.expectEqual(GameInstaller.relativePath(of: flat, movedFrom: folder, to: destination, in: bottle),
+                                "drive_c/Games/Cave Story/iji.exe",
+                                "a program at the top level is handled too")
+        }
+    }
+}
+
+/// What the Install window accepts, whether dropped or chosen.
+enum DropAcceptanceTests {
+    static func run() throws {
+        Harness.suite("What can be installed") {
+            let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
+                .appendingPathComponent("easyplay-drop-\(UUID().uuidString)", isDirectory: true)
+            try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+            defer { try? FileManager.default.removeItem(at: tmp) }
+
+            Harness.expect(GameInstaller.canInstall(URL(fileURLWithPath: "/x/setup.exe")), "an installer is accepted")
+            Harness.expect(GameInstaller.canInstall(URL(fileURLWithPath: "/x/game.msi")), "an .msi is accepted")
+            Harness.expect(GameInstaller.canInstall(URL(fileURLWithPath: "/x/disc.iso")), "an .iso is accepted")
+            Harness.expect(GameInstaller.canInstall(URL(fileURLWithPath: "/x/game.zip")), "a zip is accepted")
+            Harness.expect(GameInstaller.canInstall(tmp), "a game folder is accepted")
+            Harness.expect(GameInstaller.canInstall(URL(fileURLWithPath: "/x/game.RAR")),
+                           "a .rar is accepted here, then refused with advice rather than ignored silently")
+            Harness.expect(!GameInstaller.canInstall(URL(fileURLWithPath: "/x/notes.txt")),
+                           "an unrelated file is not accepted")
+            Harness.expect(!GameInstaller.canInstall(URL(fileURLWithPath: "/x/photo.png")),
+                           "an image is not accepted")
+
+            Harness.expect(GameInstaller.isImportable(URL(fileURLWithPath: "/x/game.zip")),
+                           "a zip is copied in, not run as an installer")
+            Harness.expect(!GameInstaller.isImportable(URL(fileURLWithPath: "/x/setup.exe")),
+                           "an installer is run, not copied in")
+        }
+    }
+}

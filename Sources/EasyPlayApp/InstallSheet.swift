@@ -18,6 +18,7 @@ struct InstallSheet: View {
     @State private var selectedRecipeID: String?
     @State private var bottleName = ""
     @State private var showingFileImporter = false
+    @State private var isDropTargeted = false
 
     private var recipe: Recipe? { model.recipe(id: selectedRecipeID) }
 
@@ -164,7 +165,7 @@ struct InstallSheet: View {
             if let preselectedInstaller { adopt(preselectedInstaller) }
         }
         .fileImporter(isPresented: $showingFileImporter,
-                      allowedContentTypes: [.executable, .diskImage, .data]) { result in
+                      allowedContentTypes: [.executable, .diskImage, .zip, .folder, .data]) { result in
             if case .success(let url) = result { adopt(url) }
         }
     }
@@ -186,13 +187,41 @@ struct InstallSheet: View {
                 Button("Change") { showingFileImporter = true }
             }
         } else {
-            Button {
-                showingFileImporter = true
-            } label: {
-                Label("Choose a Windows installer (.exe, .msi, .iso)", systemImage: "folder")
+            // A drop zone rather than only a button: dragging the download
+            // straight in is how people actually have the file to hand.
+            VStack(spacing: 10) {
+                Image(systemName: isDropTargeted ? "arrow.down.doc.fill" : "arrow.down.doc")
+                    .font(.system(size: 26))
+                    .foregroundStyle(isDropTargeted ? Color.accentColor : .secondary)
+                Text("Drag a game here")
+                    .font(.callout.weight(.medium))
+                Text("An installer (.exe, .msi), a .zip, or a game folder")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button("Choose a file…") { showingFileImporter = true }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 18)
+            .background(isDropTargeted ? Color.accentColor.opacity(0.12) : Color.clear,
+                        in: RoundedRectangle(cornerRadius: 10))
+            .overlay {
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(isDropTargeted ? Color.accentColor : Color.secondary.opacity(0.4),
+                                  style: StrokeStyle(lineWidth: isDropTargeted ? 2 : 1, dash: [6, 4]))
+            }
+            .dropDestination(for: URL.self) { urls, _ in
+                guard let url = urls.first(where: { InstallSheet.isAcceptable($0) }) else { return false }
+                adopt(url)
+                return true
+            } isTargeted: { isDropTargeted = $0 }
+            .animation(.easeOut(duration: 0.12), value: isDropTargeted)
         }
     }
+
+    /// What can be dropped: an installer, an archive, or a folder holding the game.
+    static func isAcceptable(_ url: URL) -> Bool { GameInstaller.canInstall(url) }
 
     private func recipeSummary(_ recipe: Recipe) -> some View {
         VStack(alignment: .leading, spacing: 8) {

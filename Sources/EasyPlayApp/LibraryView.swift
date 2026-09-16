@@ -37,8 +37,7 @@ struct LibraryView: View {
         // Dropping an installer straight onto the window is the shortest path
         // from "I have a setup file" to "it's installed".
         .dropDestination(for: URL.self) { urls, _ in
-            guard let url = urls.first(where: { ["exe", "msi", "iso"].contains($0.pathExtension.lowercased()) })
-            else { return false }
+            guard let url = urls.first(where: { InstallSheet.isAcceptable($0) }) else { return false }
             droppedInstaller = url
             showingInstaller = true
             return true

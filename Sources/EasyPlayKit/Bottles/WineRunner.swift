@@ -108,7 +108,7 @@ public struct WineRunner {
                     timeout: TimeInterval? = nil,
                     onOutput: ProcessRunner.OutputHandler? = nil) throws -> CommandResult {
         try runner.run(
-            backend.wine64.path,
+            backend.wineExecutable.path,
             arguments,
             environment: environment(recipe: recipe, verbosity: verbosity),
             workingDirectory: workingDirectory,

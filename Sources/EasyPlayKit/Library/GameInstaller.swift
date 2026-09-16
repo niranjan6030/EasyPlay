@@ -5,6 +5,8 @@ public enum InstallError: LocalizedError {
     case executableNotFound(glob: String)
     case unsupportedGame(Recipe)
     case steamSignInRequired
+    case unsupportedArchive(String)
+    case noExecutableInGame(folder: String)
 
     public var errorDescription: String? {
         switch self {
@@ -15,6 +17,10 @@ public enum InstallError: LocalizedError {
         case .unsupportedGame(let recipe):
             return recipe.compatibility.unsupportedReason?.explanation
                 ?? "\(recipe.title) can't run on a Mac."
+        case .unsupportedArchive(let kind):
+            return "EasyPlay can add games from a .zip file or a folder, but not from a .\(kind) file. Open it with The Unarchiver (free on the App Store) first, then add the folder it creates."
+        case .noExecutableInGame(let folder):
+            return "\(folder) doesn't contain a Windows program (.exe), so there's nothing to play. Check it's the Windows version of the game."
         case .steamSignInRequired:
             return SteamCMDOutput.Failure.needsSignIn.explanation
         }
@@ -83,6 +89,7 @@ public struct GameInstaller {
         guard let executable = finder.find(glob: glob, in: bottle, ignoring: before) else {
             var diagnoses = LogClassifier(recipe: recipe)
                 .classify(log: result.combinedOutput, exitCode: result.exitCode)
+                .filter { $0.id != "unknown-failure" }
 
             // Nothing new on disk means the installer never got as far as
             // installing — cancelled, crashed, or refused to run.
@@ -107,6 +114,247 @@ public struct GameInstaller {
         )
         try store.add(game)
         onProgress?("\(gameTitle) is installed.")
+        return game
+    }
+
+    /// Whether a file or folder is something to *copy in*, rather than an
+    /// installer to run. Most free games ship as a zip or a plain folder, and
+    /// running a zip through Wine as if it were an installer fails confusingly.
+    public static func isImportable(_ url: URL) -> Bool {
+        var isDirectory: ObjCBool = false
+        if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory), isDirectory.boolValue {
+            return true
+        }
+        return ["zip", "7z", "rar"].contains(url.pathExtension.lowercased())
+    }
+
+    /// A game unpacked and inspected, but not yet placed in a bottle.
+    ///
+    /// Which engine a game needs depends on whether it is 32- or 64-bit, and
+    /// that can only be read from the program itself — so a zip is unpacked and
+    /// examined *before* its bottle is created.
+    public struct PreparedGame {
+        public let folder: URL
+        public let executable: URL
+        public let architecture: WindowsExecutable.Architecture
+        public let title: String
+        public let alternatives: [String]
+        let isTemporary: Bool
+    }
+
+    /// Unpacks a zip (or reads a folder) and works out what the game is.
+    public func prepare(source: URL,
+                        title: String? = nil,
+                        recipe: Recipe? = nil,
+                        executableName: String? = nil,
+                        onProgress: ProgressHandler? = nil) throws -> PreparedGame {
+        let ext = source.pathExtension.lowercased()
+        if ext == "7z" || ext == "rar" { throw InstallError.unsupportedArchive(ext) }
+
+        let fileManager = FileManager.default
+        let gameTitle = title ?? recipe?.title ?? source.deletingPathExtension().lastPathComponent
+        let folder: URL
+        var temporary = false
+
+        if ext == "zip" {
+            onProgress?("Unpacking \(source.lastPathComponent)…")
+            folder = fileManager.temporaryDirectory
+                .appendingPathComponent("easyplay-import-\(UUID().uuidString)", isDirectory: true)
+            try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
+            try runner.runChecked("/usr/bin/ditto", ["-x", "-k", source.path, folder.path], timeout: 1800)
+            temporary = true
+        } else {
+            folder = source
+        }
+
+        let finder = ExecutableFinder()
+        let programs = finder.executables(in: folder)
+        guard !programs.isEmpty else {
+            if temporary { try? fileManager.removeItem(at: folder) }
+            throw InstallError.noExecutableInGame(folder: source.lastPathComponent)
+        }
+
+        let chosen: URL
+        if let executableName {
+            guard let match = programs.first(where: {
+                $0.lastPathComponent.caseInsensitiveCompare(executableName) == .orderedSame
+                    || $0.deletingPathExtension().lastPathComponent.caseInsensitiveCompare(executableName) == .orderedSame
+            }) else {
+                if temporary { try? fileManager.removeItem(at: folder) }
+                throw InstallError.executableNotFound(glob: executableName)
+            }
+            chosen = match
+        } else {
+            chosen = programs[0]
+        }
+
+        let architecture = WindowsExecutable.architecture(of: chosen)
+        onProgress?("\(chosen.lastPathComponent) is a \(architecture.displayName) program.")
+        return PreparedGame(folder: folder, executable: chosen, architecture: architecture,
+                            title: gameTitle,
+                            alternatives: programs.filter { $0 != chosen }.map(\.lastPathComponent),
+                            isTemporary: temporary)
+    }
+
+    /// Moves a prepared game into its bottle and adds it to the library.
+    @discardableResult
+    public func importPrepared(_ prepared: PreparedGame,
+                               into bottle: Bottle,
+                               recipe: Recipe?,
+                               onProgress: ProgressHandler? = nil) throws -> InstalledGame {
+        let fileManager = FileManager.default
+        let folderName = prepared.title.filter { $0.isLetter || $0.isNumber || $0 == " " || $0 == "-" || $0 == "_" }
+        let destination = bottle.driveC
+            .appendingPathComponent("Games", isDirectory: true)
+            .appendingPathComponent(folderName.isEmpty ? "Game" : folderName, isDirectory: true)
+        try? fileManager.removeItem(at: destination)
+        try fileManager.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+        onProgress?("Adding \(prepared.title) to its bottle…")
+        if prepared.isTemporary {
+            try fileManager.moveItem(at: prepared.folder, to: destination)
+        } else {
+            let cloned = try runner.run("/bin/cp", ["-cR", prepared.folder.path, destination.path], timeout: 1800)
+            if !cloned.succeeded {
+                try? fileManager.removeItem(at: destination)
+                try fileManager.copyItem(at: prepared.folder, to: destination)
+            }
+        }
+
+        // Built from path components, not string replacement: a temporary folder
+        // reported as /var/… resolves to /private/var/…, and replacing one
+        // inside the other produced a mangled path that no file matched.
+        let relative = Self.relativePath(of: prepared.executable, movedFrom: prepared.folder,
+                                         to: destination, in: bottle)
+        if !prepared.alternatives.isEmpty {
+            onProgress?("Using \(prepared.executable.lastPathComponent) (also found: \(prepared.alternatives.prefix(4).joined(separator: ", ")))")
+        }
+
+        let game = InstalledGame(
+            title: prepared.title,
+            bottleID: bottle.id,
+            recipeID: recipe?.id,
+            executableRelativePath: relative,
+            compatibilityRating: recipe?.compatibility.rating ?? .untested
+        )
+        try store.add(game)
+        onProgress?("\(prepared.title) is ready to play.")
+        return game
+    }
+
+    /// Where a file ends up, in bottle-relative form, after its folder is moved.
+    public static func relativePath(of file: URL, movedFrom folder: URL, to destination: URL, in bottle: Bottle) -> String {
+        let fileParts = file.resolvingSymlinksInPath().standardizedFileURL.pathComponents
+        let folderParts = folder.resolvingSymlinksInPath().standardizedFileURL.pathComponents
+
+        // /var/… and /private/var/… name the same place, and only one of them
+        // resolves when the path doesn't exist yet — so fall back to matching on
+        // the folder's own name rather than assuming a clean prefix.
+        let inside: [String]
+        if fileParts.starts(with: folderParts) {
+            inside = Array(fileParts.dropFirst(folderParts.count))
+        } else if let name = folderParts.last,
+                  let index = fileParts.lastIndex(of: name) {
+            inside = Array(fileParts.dropFirst(index + 1))
+        } else {
+            inside = [file.lastPathComponent]
+        }
+        let placed = inside.reduce(destination) { $0.appendingPathComponent($1) }
+
+        let placedParts = placed.standardizedFileURL.pathComponents
+        let bottleParts = bottle.url.standardizedFileURL.pathComponents
+        return Array(placedParts.dropFirst(min(bottleParts.count, placedParts.count)))
+            .joined(separator: "/")
+    }
+
+    /// Everything EasyPlay will accept as "a game to install": an installer to
+    /// run, an archive to unpack, or a folder holding the game already.
+    public static func canInstall(_ url: URL) -> Bool {
+        if isImportable(url) { return true }
+        return ["exe", "msi", "iso"].contains(url.pathExtension.lowercased())
+    }
+
+    /// Adds a game that comes as a zip file or a folder — no installer.
+    ///
+    /// The files are copied into the bottle, then the game's program is picked:
+    /// the one named by `executableName` if given, else the preset's glob, else
+    /// the largest program that isn't a settings tool or uninstaller.
+    @discardableResult
+    public func importGame(from source: URL,
+                           into bottle: Bottle,
+                           recipe: Recipe?,
+                           title: String? = nil,
+                           executableName: String? = nil,
+                           onProgress: ProgressHandler? = nil) throws -> InstalledGame {
+        if let recipe, recipe.compatibility.rating == .notSupported {
+            throw InstallError.unsupportedGame(recipe)
+        }
+        let ext = source.pathExtension.lowercased()
+        if ext == "7z" || ext == "rar" { throw InstallError.unsupportedArchive(ext) }
+
+        let fileManager = FileManager.default
+        let baseName = source.deletingPathExtension().lastPathComponent
+        let gameTitle = title ?? recipe?.title ?? baseName
+        let folderName = gameTitle.filter { $0.isLetter || $0.isNumber || $0 == " " || $0 == "-" || $0 == "_" }
+        let destination = bottle.driveC
+            .appendingPathComponent("Games", isDirectory: true)
+            .appendingPathComponent(folderName.isEmpty ? "Game" : folderName, isDirectory: true)
+        try? fileManager.removeItem(at: destination)
+        try fileManager.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+        if ext == "zip" {
+            onProgress?("Unpacking \(source.lastPathComponent)…")
+            try fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
+            // ditto keeps permissions and handles the zips macOS itself makes.
+            try runner.runChecked("/usr/bin/ditto", ["-x", "-k", source.path, destination.path], timeout: 1800)
+        } else {
+            onProgress?("Copying \(source.lastPathComponent)…")
+            // An APFS clone where possible: instant, and no extra disk.
+            let cloned = try runner.run("/bin/cp", ["-cR", source.path, destination.path], timeout: 1800)
+            if !cloned.succeeded {
+                try? fileManager.removeItem(at: destination)
+                try fileManager.copyItem(at: source, to: destination)
+            }
+        }
+
+        let finder = ExecutableFinder()
+        let programs = finder.executables(in: destination)
+        guard !programs.isEmpty else {
+            try? fileManager.removeItem(at: destination)
+            throw InstallError.noExecutableInGame(folder: source.lastPathComponent)
+        }
+
+        let chosen: URL
+        if let executableName {
+            guard let match = programs.first(where: {
+                $0.lastPathComponent.caseInsensitiveCompare(executableName) == .orderedSame
+                    || $0.deletingPathExtension().lastPathComponent.caseInsensitiveCompare(executableName) == .orderedSame
+            }) else {
+                throw InstallError.executableNotFound(glob: executableName)
+            }
+            chosen = match
+        } else if let recipe, let match = finder.find(glob: recipe.launch.executableGlob, in: bottle,
+                                                       skippingSupportFiles: false),
+                  match.path.hasPrefix(destination.path) {
+            chosen = match
+        } else {
+            chosen = programs[0]
+        }
+
+        if programs.count > 1 {
+            let others = programs.filter { $0 != chosen }.map(\.lastPathComponent).prefix(4)
+            onProgress?("Using \(chosen.lastPathComponent) (also found: \(others.joined(separator: ", ")))")
+        }
+
+        let game = InstalledGame(
+            title: gameTitle,
+            bottleID: bottle.id,
+            recipeID: recipe?.id,
+            executableRelativePath: chosen.path.replacingOccurrences(of: bottle.url.path + "/", with: ""),
+            compatibilityRating: recipe?.compatibility.rating ?? .untested
+        )
+        try store.add(game)
+        onProgress?("\(gameTitle) is ready to play.")
         return game
     }
 

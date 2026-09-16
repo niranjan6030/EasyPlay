@@ -27,8 +27,10 @@ func printUsage() {
       easyplay ask "<question>"    Ask whether a game runs on this Mac
 
       easyplay games               List installed games
-      easyplay install <installer.exe> --bottle <id> [--recipe <id>]
-                                   Run a Windows installer inside a bottle
+      easyplay install <installer.exe | game.zip | game folder> [--recipe <id>]
+                       [--bottle <id>] [--exe <program.exe>] [--name <title>]
+                                   Install a game: runs an installer, or copies in
+                                   a zip or folder and picks its program
       easyplay steam-signin <username>
                                    Sign in to Steam once (you type your password
                                    into Valve's SteamCMD, never into EasyPlay)
@@ -75,14 +77,27 @@ func badge(for rating: CompatibilityRating) -> String {
 
 // MARK: - Shared
 
+/// The detected engines, read once per command.
+let engineReport: EnvironmentReport = ToolchainDetector().detect()
+
 /// Resolves the Wine build to drive, or explains why we can't.
 func resolveBackend() -> WineBackend? {
-    let report = ToolchainDetector().detect()
-    guard let backend = report.preferredBackend else {
+    guard let backend = engineReport.preferredBackend else {
         print("\(Colour.red)No Wine engine found. Run 'easyplay doctor' to see how to install one.\(Colour.reset)")
         return nil
     }
     return backend
+}
+
+/// The engine a bottle was built with, so it is always driven by the same one.
+func resolveEngine(forBottle bottle: Bottle) -> WineBackend? {
+    engineReport.backend(for: bottle) ?? resolveBackend()
+}
+
+/// The engine that suits a game: the DirectX engine for 64-bit DirectX titles,
+/// the modern Wine for everything else.
+func resolveEngine(forRecipe recipe: Recipe?, architecture: WindowsExecutable.Architecture = .unknown) -> WineBackend? {
+    engineReport.backend(for: recipe, architecture: architecture) ?? resolveBackend()
 }
 
 func formatBytes(_ bytes: Int64) -> String {
@@ -265,7 +280,7 @@ func deleteBottle(_ arguments: [String]) -> Int32 {
     let manager = BottleManager(backend: backend)
     do {
         let bottle = try manager.bottle(id: id)
-        try manager.delete(bottle)
+        try BottleManager(backend: resolveEngine(forBottle: bottle) ?? backend).delete(bottle)
         print("Deleted \"\(bottle.name)\".")
         return 0
     } catch {
@@ -283,16 +298,17 @@ func verifyBottle(_ arguments: [String]) -> Int32 {
 
     do {
         let bottle = try BottleManager(backend: backend).bottle(id: bottleID)
+        let engine = resolveEngine(forBottle: bottle) ?? backend
         let recipe = try RecipeLibrary().recipe(id: "winemine")
 
         print("\nChecking \"\(bottle.name)\" can run a Windows program…\n")
 
-        let installer = GameInstaller(backend: backend)
+        let installer = GameInstaller(backend: engine)
         let game = try installer.registerExistingGame(in: bottle, recipe: recipe)
         print("  Found \(Colour.dim)\(game.executableRelativePath)\(Colour.reset)")
 
-        print("  Starting it…")
-        let outcome = try GameLauncher(backend: backend)
+        print("  Starting it on \(engine.displayName)…")
+        let outcome = try GameLauncher(backend: engine)
             .launch(game, in: bottle, recipe: recipe, timeout: 12)
 
         if outcome.succeeded {
@@ -354,7 +370,7 @@ func value(of flag: String, in arguments: [String]) -> String? {
 
 func installGame(_ arguments: [String]) -> Int32 {
     guard let installerPath = arguments.first, !installerPath.hasPrefix("--") else {
-        print("Usage: easyplay install <installer.exe> --bottle <id> [--recipe <id>]")
+        print("Usage: easyplay install <installer.exe | game.zip | folder> [--recipe <id>] [--exe <program.exe>] [--name <title>]")
         return 1
     }
     guard let backend = resolveBackend() else { return 1 }
@@ -379,26 +395,46 @@ func installGame(_ arguments: [String]) -> Int32 {
     }
 
     do {
-        let manager = BottleManager(backend: backend)
+        // A game's engine depends on whether it is 32- or 64-bit, so a zip or
+        // folder is unpacked and inspected before its bottle exists.
+        var prepared: GameInstaller.PreparedGame?
+        if GameInstaller.isImportable(installerURL) {
+            prepared = try GameInstaller(backend: backend).prepare(
+                source: installerURL, title: value(of: "--name", in: arguments),
+                recipe: recipe, executableName: value(of: "--exe", in: arguments)) { print("  \($0)") }
+        }
+        let engine = resolveEngine(forRecipe: recipe, architecture: prepared?.architecture ?? .unknown) ?? backend
+        let manager = BottleManager(backend: engine)
         let bottle: Bottle
         if let bottleID = value(of: "--bottle", in: arguments) {
             bottle = try manager.bottle(id: bottleID)
         } else {
-            let name = recipe?.title ?? installerURL.deletingPathExtension().lastPathComponent
-            print("\nNo bottle given, so creating one called \"\(name)\".\n")
+            let name = value(of: "--name", in: arguments)
+                ?? recipe?.title ?? installerURL.deletingPathExtension().lastPathComponent
+            print("\nNo bottle given, so creating one called \"\(name)\" on \(engine.displayName).\n")
             bottle = try manager.createOrReuse(name: name, recipe: recipe) { print("  \($0)") }.bottle
         }
 
         print("")
-        let game = try GameInstaller(backend: backend)
-            .install(installerAt: installerURL, into: bottle, recipe: recipe) { print("  \($0)") }
+        let installer = GameInstaller(backend: engine)
+        let game: InstalledGame
+        if let prepared {
+            game = try installer.importPrepared(prepared, into: bottle, recipe: recipe) { print("  \($0)") }
+        } else {
+            game = try installer.install(installerAt: installerURL, into: bottle, recipe: recipe) { print("  \($0)") }
+        }
 
         print("\n\(Colour.green)Installed\(Colour.reset) \(game.title)")
         print("  play it with: easyplay play \(game.id)\n")
         return 0
     } catch let error as InstallError {
-        print("\n\(Colour.red)\(error.localizedDescription)\(Colour.reset)\n")
-        if case .installerFailed(_, let diagnoses) = error { reportDiagnoses(diagnoses, logURL: nil) }
+        if case .installerFailed(_, let diagnoses) = error {
+            // The diagnoses already carry the explanation; don't print it twice.
+            print("\n\(Colour.red)The install didn't complete.\(Colour.reset)\n")
+            reportDiagnoses(diagnoses, logURL: nil)
+        } else {
+            print("\n\(Colour.red)\(error.localizedDescription)\(Colour.reset)\n")
+        }
         return 1
     } catch {
         print("\n\(Colour.red)\(error.localizedDescription)\(Colour.reset)\n")
@@ -421,14 +457,19 @@ func playGame(_ arguments: [String]) -> Int32 {
 
     do {
         let bottle = try BottleManager(backend: backend).bottle(id: game.bottleID)
+        let engine = resolveEngine(forBottle: bottle) ?? backend
         let recipe = game.recipeID.flatMap { try? RecipeLibrary().recipe(id: $0) }
 
-        print("\nLaunching \(Colour.bold)\(game.title)\(Colour.reset)…\n")
-        let outcome = try GameLauncher(backend: backend)
+        print("\nLaunching \(Colour.bold)\(game.title)\(Colour.reset) on \(engine.displayName)…\n")
+        let outcome = try GameLauncher(backend: engine)
             .launch(game, in: bottle, recipe: recipe, timeout: seconds)
 
         if outcome.succeeded {
-            print("\(Colour.green)\(game.title) ran and exited cleanly.\(Colour.reset)\n")
+            if outcome.stoppedByTimeout, let seconds {
+                print("\(Colour.green)\(game.title) was still running after \(Int(seconds))s\(Colour.reset) — EasyPlay stopped it because you set a time limit.\n")
+            } else {
+                print("\(Colour.green)\(game.title) ran and exited cleanly.\(Colour.reset)\n")
+            }
             return 0
         }
         print("\(Colour.red)\(game.title) didn't run properly.\(Colour.reset)\n")
@@ -459,6 +500,7 @@ func probeGame(_ arguments: [String]) -> Int32 {
 
     do {
         let bottle = try BottleManager(backend: backend).bottle(id: game.bottleID)
+        let engine = resolveEngine(forBottle: bottle) ?? backend
         let recipe = game.recipeID.flatMap { try? RecipeLibrary().recipe(id: $0) }
 
         print("\nLaunching \(Colour.bold)\(game.title)\(Colour.reset) and watching what it loads…")
@@ -468,7 +510,7 @@ func probeGame(_ arguments: [String]) -> Int32 {
 
         // The launch blocks until the game exits, so it runs on another thread
         // while this one waits for the process to appear and then inspects it.
-        let launcher = GameLauncher(backend: backend)
+        let launcher = GameLauncher(backend: engine)
         DispatchQueue.global().async {
             _ = try? launcher.launch(game, in: bottle, recipe: recipe, timeout: seconds)
         }
