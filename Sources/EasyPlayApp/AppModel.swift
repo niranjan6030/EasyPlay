@@ -161,6 +161,13 @@ final class AppModel {
         }
     }
 
+    /// Downloads Classic Wine, the engine for 32-bit games.
+    func installClassicWine() {
+        run(title: "Installing Classic Wine") { report in
+            try ClassicWineInstaller().install(onProgress: report)
+        }
+    }
+
     // MARK: - Bottles
 
     func createBottle(named name: String, recipe: Recipe?) {
@@ -292,7 +299,17 @@ final class AppModel {
             if let prepared {
                 _ = try installer.importPrepared(prepared, into: bottle, recipe: recipe, onProgress: report)
             } else {
-                _ = try installer.install(installerAt: url, into: bottle, recipe: recipe, onProgress: report)
+                let game = try installer.install(installerAt: url, into: bottle, recipe: recipe, onProgress: report)
+                // An installer can't say whether its game is 32- or 64-bit; the
+                // installed program can.
+                let exe = bottle.url.appendingPathComponent(game.executableRelativePath)
+                let architecture = WindowsExecutable.architecture(of: exe)
+                if let wanted = detected?.backend(for: recipe, architecture: architecture),
+                   wanted.kind.generation > bottle.backendKind.generation {
+                    report("\(exe.lastPathComponent) is a \(architecture.displayName) game.")
+                    var moving = bottle
+                    try manager.moveBottle(&moving, to: wanted, onProgress: report)
+                }
             }
         }
     }

@@ -39,6 +39,16 @@ public struct EnvironmentReport {
     public let winetricksPath: URL?
     public let checks: [EnvironmentCheck]
 
+    public init(system: SystemInfo, homebrewVersion: String?, backends: [WineBackend],
+                preferredBackend: WineBackend?, winetricksPath: URL?, checks: [EnvironmentCheck]) {
+        self.system = system
+        self.homebrewVersion = homebrewVersion
+        self.backends = backends
+        self.preferredBackend = preferredBackend
+        self.winetricksPath = winetricksPath
+        self.checks = checks
+    }
+
     /// True when a game could actually be installed and launched right now.
     public var isReady: Bool { !checks.contains { $0.status == .blocked } }
 
@@ -65,8 +75,15 @@ public struct EnvironmentReport {
         // Toolkit's 2022 Wine, and 32-bit code can't reach D3DMetal anyway. A
         // 64-bit game is the opposite — Cortex Command runs there and crashes on
         // the modern Wine. So architecture decides, not preference.
-        if architecture == .x86, let modern = backends.first(where: { $0.kind == .wineStaging }) {
-            return modern
+        //
+        // Among the newer engines, Classic Wine (Wine 8) comes first: Wine 11
+        // crashes some 32-bit games in its new WoW64 exception handling that
+        // Wine 8 runs fine (TrackMania Nations Forever), and none tested so far
+        // needed Wine 11 over it.
+        if architecture == .x86,
+           let engine = backends.first(where: { $0.kind == .classicWine })
+                ?? backends.first(where: { $0.kind == .wineStaging }) {
+            return engine
         }
         return backend(for: .gamePortingToolkit)
     }
@@ -146,6 +163,15 @@ public struct ToolchainDetector {
                                             translators: bundle.translators),
                   seenPaths.insert(backend.binDirectory.resolvingSymlinksInPath().path).inserted else { continue }
             found.append(backend)
+        }
+
+        // Classic Wine isn't an app bundle; it's installed by EasyPlay itself.
+        if let classic = makeBackend(kind: .classicWine,
+                                     binDirectory: ClassicWineInstaller.binDirectory,
+                                     translators: [.wineD3D]),
+           ClassicWineInstaller.isInstalled,
+           seenPaths.insert(classic.binDirectory.resolvingSymlinksInPath().path).inserted {
+            found.append(classic)
         }
 
         // Anything else the user has on PATH, e.g. a self-built Wine. Symlinks are
@@ -265,6 +291,19 @@ public struct ToolchainDetector {
                 detail: "No Wine installation found. This is the engine that actually runs Windows games.",
                 remedy: "Let EasyPlay install it for you, or run the command below yourself. It is about a 2 GB download.",
                 remedyCommand: brew.installCommand(for: BrewClient.gamePortingToolkit)
+            ))
+        }
+
+        if preferred != nil {
+            let classic = backends.first { $0.kind == .classicWine }
+            checks.append(EnvironmentCheck(
+                id: "classic-wine",
+                title: "Engine for 32-bit games",
+                status: classic == nil ? .warning : .ok,
+                detail: classic.map { "\($0.displayName). Older games built for 32-bit Windows run on this." }
+                    ?? "Not installed. Older 32-bit games crash on the Game Porting Toolkit, and some crash on newer Wine too.",
+                remedy: classic == nil ? "Install Classic Wine (Wine 8, about 250 MB) for older games." : nil,
+                remedyCommand: classic == nil ? "easyplay install-engine" : nil
             ))
         }
 

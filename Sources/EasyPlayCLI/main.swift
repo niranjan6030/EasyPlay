@@ -15,6 +15,8 @@ func printUsage() {
 
     USAGE
       easyplay doctor              Check this Mac and report what's missing
+      easyplay install-engine      Install Classic Wine (Wine 8), the engine
+                                   for older 32-bit games (about 250 MB)
       easyplay recipes             List the game presets EasyPlay knows about
       easyplay recipes <id>        Show one preset in detail
 
@@ -422,6 +424,16 @@ func installGame(_ arguments: [String]) -> Int32 {
             game = try installer.importPrepared(prepared, into: bottle, recipe: recipe) { print("  \($0)") }
         } else {
             game = try installer.install(installerAt: installerURL, into: bottle, recipe: recipe) { print("  \($0)") }
+
+            // Only now is the game's architecture knowable.
+            let exe = bottle.url.appendingPathComponent(game.executableRelativePath)
+            let architecture = WindowsExecutable.architecture(of: exe)
+            if let wanted = resolveEngine(forRecipe: recipe, architecture: architecture),
+               wanted.kind.generation > bottle.backendKind.generation {
+                print("  \(exe.lastPathComponent) is a \(architecture.displayName) game, so it needs \(wanted.displayName).")
+                var moving = bottle
+                try BottleManager(backend: engine).moveBottle(&moving, to: wanted) { print("  \($0)") }
+            }
         }
 
         print("\n\(Colour.green)Installed\(Colour.reset) \(game.title)")
@@ -772,12 +784,36 @@ func steamInstall(_ arguments: [String]) -> Int32 {
     }
 }
 
+// MARK: - Engines
+
+func installEngine() -> Int32 {
+    if ClassicWineInstaller.isInstalled {
+        print("Classic Wine is already installed at \(ClassicWineInstaller.directory.path).")
+        return 0
+    }
+    print("\(Colour.bold)Installing Classic Wine\(Colour.reset) — Wine 8, from CrossOver 23's source, for 32-bit games")
+    print("\(Colour.dim)From \(ClassicWineInstaller.engine.url.absoluteString)")
+    print("and  \(ClassicWineInstaller.libraries.url.absoluteString)\(Colour.reset)\n")
+    do {
+        try ClassicWineInstaller().install { print("  \($0)") }
+        if let engine = ToolchainDetector().discoverBackends().first(where: { $0.kind == .classicWine }) {
+            print("\n\(Colour.green)Ready:\(Colour.reset) \(engine.displayName). 32-bit games now install onto it.")
+        }
+        return 0
+    } catch {
+        print("\n\(Colour.red)\(error.localizedDescription)\(Colour.reset)\n")
+        return 1
+    }
+}
+
 // MARK: - Dispatch
 
 let exitCode: Int32
 switch arguments.first {
 case "doctor":
     exitCode = doctor()
+case "install-engine":
+    exitCode = installEngine()
 case "recipes":
     exitCode = arguments.count > 1 ? showRecipe(arguments[1]) : listRecipes()
 case "bottles":

@@ -109,6 +109,36 @@ public struct BottleManager {
         try? fileManager.removeItem(at: destination.appendingPathComponent(".easyplay-template-ready"))
     }
 
+    /// Moves a bottle onto a different engine.
+    ///
+    /// An installer can't say whether the game it installs is 32- or 64-bit, so
+    /// the right engine is only known once the game is on disk. Only moving to a
+    /// *newer* Wine is allowed: Wine upgrades an older prefix in place, but an
+    /// older Wine can't safely open a prefix a newer one has written.
+    public func moveBottle(_ bottle: inout Bottle, to newEngine: WineBackend,
+                           onProgress: ProgressHandler? = nil) throws {
+        guard newEngine.kind != bottle.backendKind else { return }
+        guard newEngine.kind.generation > bottle.backendKind.generation,
+              newEngine.kind.generation != Int.max else {
+            throw BottleError.initialisationFailed(
+                "Moving from \(bottle.backendKind.displayName) to \(newEngine.kind.displayName) isn't safe, so the game stays where it is.")
+        }
+        // Stop the old engine's server first; two Wine versions must never
+        // share one prefix at the same time.
+        _ = try? WineRunner(backend: backend, bottle: bottle, runner: runner).shutdown()
+
+        onProgress?("Moving to the \(newEngine.displayName) engine…")
+        var environment = WineRunner(backend: newEngine, bottle: bottle, runner: runner).environment()
+        environment["WINEPREFIX"] = bottle.url.path
+        _ = try runner.run(newEngine.wineExecutable.path, ["wineboot", "--update"],
+                           environment: environment, timeout: 600)
+        _ = try runner.run(newEngine.wineserver.path, ["-w"],
+                           environment: ["WINEPREFIX": bottle.url.path], timeout: 120)
+        bottle.backendKind = newEngine.kind
+        bottle.graphicsBackend = newEngine.builtinTranslator
+        try save(bottle)
+    }
+
     public func bottle(named name: String) -> Bottle? {
         list().first { $0.name.caseInsensitiveCompare(name) == .orderedSame }
     }

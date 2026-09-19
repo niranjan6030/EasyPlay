@@ -232,6 +232,27 @@ Related: this Game Porting Toolkit build has **no Vulkan support whatsoever**
 option on this backend either. On this stack the real choice is D3DMetal for
 64-bit programs and WineD3D for everything else.
 
+### Which engine a 32-bit game gets
+
+Losing D3DMetal is not the only problem. Measured on this Mac (M4, macOS 26):
+
+| Game (32-bit) | GPTK's Wine 7.7 | Classic Wine 8.0.1 | Wine Staging 11.17 |
+|---|---|---|---|
+| TrackMania Nations Forever (DirectX 9) | crashes (allocator assertion) | **runs**: 3D menus rendered via WineD3D → OpenGL → Metal, no crash in 4+ minutes | crashes: `Exception frame is not in stack limits` in its new WoW64 exception handling |
+| Cave Story, Spelunky Classic, Iji | crash | not yet re-tested | start |
+
+So EasyPlay picks the engine from the installed program's PE header, not from the
+preset: 64-bit games go to the Game Porting Toolkit, 32-bit games go to **Classic
+Wine**, or to Wine Staging if Classic Wine isn't installed. An installer can't
+say what it installs, so a bottle is created on the default engine and moved
+once the game's `.exe` is on disk. Moves only go forward (7.7 → 8 → 11), because
+Wine upgrades an older prefix in place but can't safely open a newer one.
+
+Classic Wine is Wine 8 built from the source CodeWeavers publishes for CrossOver
+23, packaged by [Sikarugir](https://github.com/Sikarugir-App). Install it from
+the setup screen or with `easyplay install-engine`; both downloads are pinned and
+checked against their SHA-256 digests.
+
 ## Adding a preset
 
 1. **Check it can work at all.** Kernel anti-cheat (Vanguard, EasyAntiCheat,

@@ -16,14 +16,33 @@ public struct WineBackend: Identifiable, Equatable {
         /// Porting Toolkit's Wine, and the only one here whose 32-bit support
         /// works: every 32-bit game tested crashes on GPTK's Wine 7.7.
         case wineStaging
+        /// Wine 8 built from CrossOver 23's published source (the Sikarugir
+        /// build). The engine for 32-bit games: GPTK's Wine 7.7 crashes them
+        /// with an allocator assertion, and Wine 11 crashes some of them in its
+        /// new WoW64 exception handling (TrackMania Nations Forever). Wine 8
+        /// sits between those two bugs and runs them.
+        case classicWine
         case wineHQ
         /// A Wine on PATH that we didn't recognise, or one the user pointed us at.
         case custom
+
+        /// How new the Wine inside is. Wine upgrades an older prefix in place
+        /// but can't safely open one a newer Wine has written, so a bottle may
+        /// only ever move up this order.
+        public var generation: Int {
+            switch self {
+            case .gamePortingToolkit: return 7
+            case .classicWine: return 8
+            case .wineStaging: return 11
+            case .wineHQ, .custom: return Int.max
+            }
+        }
 
         public var displayName: String {
             switch self {
             case .gamePortingToolkit: return "Game Porting Toolkit"
             case .wineStaging: return "Wine Staging"
+            case .classicWine: return "Classic Wine"
             case .wineHQ: return "WineHQ"
             case .custom: return "Custom Wine"
             }
@@ -68,6 +87,34 @@ public struct WineBackend: Identifiable, Equatable {
             return binDirectory
                 .deletingLastPathComponent()
                 .appendingPathComponent("lib/external", isDirectory: true)
+        case .wineStaging, .classicWine, .wineHQ, .custom:
+            return nil
+        }
+    }
+
+    /// Directories the dynamic loader must search for this engine's Mac-side
+    /// libraries, in order, or nil when the engine finds its own.
+    ///
+    /// Classic Wine is built against libraries (FreeType, GnuTLS, MoltenVK,
+    /// GStreamer…) that ship in a separate `Frameworks` folder beside it, and
+    /// without them it fails before the game's first frame. Note that macOS
+    /// strips `DYLD_*` variables when a protected binary such as `/usr/bin/nohup`
+    /// sits between us and Wine, so Wine has to be launched directly.
+    public var libraryPath: [URL]? {
+        let wineLibraries = binDirectory.deletingLastPathComponent()
+            .appendingPathComponent("lib", isDirectory: true)
+        switch kind {
+        case .gamePortingToolkit:
+            guard let external = externalLibraryDirectory else { return nil }
+            return [external, wineLibraries, URL(fileURLWithPath: "/usr/lib")]
+        case .classicWine:
+            // <engine>/wswine.bundle/bin -> <engine>/Frameworks
+            let frameworks = binDirectory.deletingLastPathComponent().deletingLastPathComponent()
+                .appendingPathComponent("Frameworks", isDirectory: true)
+            return [frameworks,
+                    frameworks.appendingPathComponent("GStreamer.framework/Versions/1.0/lib", isDirectory: true),
+                    wineLibraries,
+                    URL(fileURLWithPath: "/usr/lib")]
         case .wineStaging, .wineHQ, .custom:
             return nil
         }

@@ -17,6 +17,15 @@ struct SetupView: View {
                 if let environment = model.environment {
                     ForEach(environment.checks) { check in
                         CheckRow(check: check)
+                        if check.id == "classic-wine", check.status != .ok {
+                            Button {
+                                model.installClassicWine()
+                            } label: {
+                                Label("Install Classic Wine", systemImage: "arrow.down.circle")
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .padding(.leading, 34)
+                        }
                     }
                     engineNote(environment)
                 } else {

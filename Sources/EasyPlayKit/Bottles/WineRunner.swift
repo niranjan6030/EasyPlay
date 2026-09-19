@@ -48,17 +48,11 @@ public struct WineRunner {
         ]
 
         // Apple's D3DMetal is a Mac framework that Wine's patched d3d11/dxgi DLLs
-        // load at runtime. Without this path the DLLs load but find nothing to
-        // talk to, and the game fails with an unhelpful device-creation error.
-        if let externalLibraries = backend.externalLibraryDirectory {
-            let wineLibraries = backend.binDirectory
-                .deletingLastPathComponent()
-                .appendingPathComponent("lib", isDirectory: true)
-            environment["DYLD_FALLBACK_LIBRARY_PATH"] = [
-                externalLibraries.path,
-                wineLibraries.path,
-                "/usr/lib",
-            ].joined(separator: ":")
+        // load at runtime, and Classic Wine links against libraries shipped
+        // beside it. Without this path the game fails before its first frame,
+        // usually with an unhelpful device-creation or missing-library error.
+        if let libraryPath = backend.libraryPath {
+            environment["DYLD_FALLBACK_LIBRARY_PATH"] = libraryPath.map(\.path).joined(separator: ":")
         }
 
         if let recipe {

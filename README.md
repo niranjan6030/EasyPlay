@@ -128,6 +128,11 @@ of pressing the button.
   > have them, but recommends Game Porting Toolkit, which is also the only one of
   > the three with Metal-backed DirectX.
 
+- For older 32-bit games, **Classic Wine** (Wine 8, about 250 MB). The setup
+  screen installs it with one click, or run `easyplay install-engine`. See
+  [COMPATIBILITY.md](COMPATIBILITY.md#which-engine-a-32-bit-game-gets) for why
+  these games need a different engine.
+
 EasyPlay's setup screen checks all of this and offers to run the install for you.
 
 ## Building
@@ -155,6 +160,7 @@ drives it is logic in the wrong place.
 ```bash
 swift run easyplay ask "can I run Elden Ring?"   # will it work before you buy?
 swift run easyplay doctor                 # check this Mac
+swift run easyplay install-engine         # Classic Wine, for 32-bit games
 swift run easyplay recipes                # list presets
 swift run easyplay recipes ride-4         # inspect one
 swift run easyplay bottle-create "RIDE 4" --recipe ride-4

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "trackmania-nations-forever",
+  "title": "TrackMania Nations Forever",
+  "installerPatterns": ["tmnationsforever", "trackmania", "tmnf"],
+  "publisher": "Ubisoft Nadeo",
+
+  "compatibility": {
+    "rating": "untested",
+    "unsupportedReason": null,
+    "lastVerified": null,
+    "source": "Free from Ubisoft; not yet verified by EasyPlay",
+    "notes": [
+      "A free 32-bit DirectX 9 racing game, used as a stand-in for racing games of the same era such as Need for Speed Most Wanted (2005).",
+      "32-bit, so it runs on Classic Wine (Wine 8). It crashes on the Game Porting Toolkit's Wine 7.7 and on Wine 11.17 (an exception-handling bug in its WoW64 layer)."
+    ]
+  },
+
+  "requires": { "backend": null, "rosetta": true, "diskGB": 2 },
+  "bottle": { "windowsVersion": "win10", "architecture": "win64", "retinaMode": false, "dpi": 96 },
+  "graphics": { "backend": "wineD3D", "dxvk": null },
+  "dllOverrides": {},
+  "environment": { "WINEESYNC": "1", "WINEMSYNC": "1" },
+  "winetricks": [],
+
+  "install": {
+    "kind": "installerExecutable",
+    "steamAppID": null,
+    "installerArguments": ["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-"],
+    "hints": ["Installs unattended; nothing to click."]
+  },
+
+  "launch": {
+    "executableGlob": "**/TmForever.exe",
+    "arguments": [],
+    "workingDirectoryFromExecutable": true
+  },
+
+  "knownIssues": []
+}

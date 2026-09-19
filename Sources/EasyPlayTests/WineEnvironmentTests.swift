@@ -55,6 +55,43 @@ enum WineEnvironmentTests {
             Harness.expect(loaderPath.contains("/usr/lib"),
                            "/usr/lib is kept — dropping it breaks every system library")
 
+            // Classic Wine links against libraries in a Frameworks folder beside
+            // it; without them it dies before the game's first frame.
+            let classic = WineBackend(
+                kind: .classicWine,
+                binDirectory: URL(fileURLWithPath: "/Engines/Classic Wine/wswine.bundle/bin"),
+                version: "8.0.1", bundledTranslators: [.wineD3D])
+            let classicPath = (WineRunner(backend: classic, bottle: Bottle(name: "Old"))
+                .environment()["DYLD_FALLBACK_LIBRARY_PATH"] ?? "").split(separator: ":").map(String.init)
+            Harness.expectEqual(classicPath, [
+                "/Engines/Classic Wine/Frameworks",
+                "/Engines/Classic Wine/Frameworks/GStreamer.framework/Versions/1.0/lib",
+                "/Engines/Classic Wine/wswine.bundle/lib",
+                "/usr/lib",
+            ], "Classic Wine's own libraries are on the loader path, in order")
+
+            // Measured: 32-bit games crash on GPTK's Wine 7.7, and TrackMania
+            // crashes on Wine 11.17 but runs on Wine 8.
+            let gptk = backend()
+            let staging = WineBackend(kind: .wineStaging, binDirectory: URL(fileURLWithPath: "/S/bin"),
+                                      version: "11.17", bundledTranslators: [.wineD3D])
+            func report(_ engines: [WineBackend]) -> EnvironmentReport {
+                EnvironmentReport(system: SystemProbe().probe(), homebrewVersion: nil, backends: engines,
+                                  preferredBackend: engines.first, winetricksPath: nil, checks: [])
+            }
+            let all = report([gptk, staging, classic])
+            Harness.expectEqual(all.backend(for: nil, architecture: .x86)?.kind, .classicWine,
+                                "32-bit games go to Classic Wine when it is installed")
+            Harness.expectEqual(report([gptk, staging]).backend(for: nil, architecture: .x86)?.kind, .wineStaging,
+                                "without it, 32-bit games fall back to Wine Staging")
+            Harness.expectEqual(all.backend(for: nil, architecture: .x64)?.kind, .gamePortingToolkit,
+                                "64-bit games stay on the Game Porting Toolkit")
+
+            // Wine can upgrade an older prefix but not open a newer one.
+            Harness.expect(WineBackend.Kind.gamePortingToolkit.generation < WineBackend.Kind.classicWine.generation
+                           && WineBackend.Kind.classicWine.generation < WineBackend.Kind.wineStaging.generation,
+                           "engines are ordered 7.7 < 8 < 11, so bottles only move forward")
+
             Harness.expect(runner(.wineHQ).environment()["DYLD_FALLBACK_LIBRARY_PATH"] == nil,
                            "non-GPTK backends get no loader-path injection")
 

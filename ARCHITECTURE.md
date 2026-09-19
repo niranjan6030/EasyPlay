@@ -185,6 +185,22 @@ It also produced the sharpest illustration of what this project is. Wine had all
 the information needed to explain this and chose not to surface it. That gap —
 between what the tool knows and what the user is told — is the entire product.
 
+### Three engines, chosen by the game's own header
+
+No single Wine build runs everything here. The Game Porting Toolkit's Wine 7.7 is
+the only one with D3DMetal, and it crashes every 32-bit game tested. Wine 11.17
+runs some of those and crashes others in its rewritten WoW64 exception handling.
+Wine 8, built from CrossOver 23's source, runs the one that failed on both.
+Rather than asking the user to pick, EasyPlay reads the installed `.exe` and
+routes it: 64-bit to GPTK, 32-bit to Classic Wine, falling back to Wine 11.
+
+Two details made this harder than a lookup table. An installer doesn't reveal
+what it installs, so the bottle is moved after installation, and only ever to a
+newer Wine, since prefixes upgrade but don't downgrade. And Classic Wine loads
+its libraries through `DYLD_FALLBACK_LIBRARY_PATH`, which macOS silently strips
+when a protected binary like `/usr/bin/nohup` sits in the launch chain, so games
+are launched directly.
+
 ### A chatbot that refuses to guess
 
 The natural-language front door ("can I run Elden Ring?") is the one feature
