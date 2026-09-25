@@ -175,8 +175,51 @@ swift run easyplay play <game-id>
 
 ## Current status
 
-Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
-(Wine 7.7):
+Verified on an M4 Mac running macOS 26.5.2, against three engines: Game Porting
+Toolkit 3.0 (Wine 7.7), Classic Wine 8.0.1 (from CrossOver 23 source) and Wine
+Staging 11.17.
+
+### Games actually run on this Mac
+
+Every row was launched through EasyPlay on this machine, and the renderer claims
+were checked with `easyplay probe`, which lists the graphics libraries the live
+process actually loaded. "Crashes" means the game started and then died. The
+engine EasyPlay picks for that game is in bold.
+
+| Game | Bits | GPTK 7.7 | Classic Wine 8 | Wine 11.17 |
+|---|---|---|---|---|
+| Cortex Command | 64 | **runs** — D3DMetal, 60s clean | not tested | crashes |
+| Cave Story | 32 | crashes — allocator assertion | **runs** | crashes — `invalid frame` |
+| TrackMania Nations Forever | 32 | not tested | **runs** — 3D menus, 4+ min | crashes — `invalid frame` |
+| Iji | 32 | not tested | **runs** | runs |
+| Spelunky Classic | 32 | not tested | **runs** | runs |
+| Unigine Superposition | 64 | **runs** — DX11 via D3DMetal | not tested | not tested |
+| Unigine Heaven | 32 | starts, silently falls back to WineD3D | not tested | not tested |
+| 7-Zip 23.01 | 64 | **installs and runs** | not tested | not tested |
+
+"Not tested" means exactly that: a bottle can't be moved back to an older Wine,
+so filling those cells means a fresh install per engine per game, and the ones
+above were the ones worth the disk. Nothing in this table is inferred from a
+compatibility database.
+
+Three findings worth stating plainly:
+
+- **32-bit games hit a wall on the Game Porting Toolkit's Wine 7.7.** Cave Story
+  dies on an allocator assertion in `virtual.c`, and Unigine Heaven starts but
+  silently drops to WineD3D, because that build's D3DMetal is 64-bit only and it
+  ships no Vulkan at all.
+- **Wine 11.17 crashes two of the four 32-bit games** in its rewritten WoW64
+  exception handling — the same `err:seh:call_seh_handlers invalid frame`
+  signature in both. Wine 8 runs all four.
+- **Cortex Command is the mirror image**: it runs on the Game Porting Toolkit
+  and crashes on Wine 11.
+
+That is why EasyPlay reads the PE header of the installed program and routes
+64-bit games to the Game Porting Toolkit and 32-bit games to Classic Wine,
+rather than asking you to choose an engine. `COMPATIBILITY.md` has the full
+evidence.
+
+### What else is verified
 
 - Environment detection, including deduplicating the Homebrew symlinks that make
   one Wine installation look like two
@@ -196,7 +239,7 @@ Verified on an M4 Mac running macOS 26.5.2 with Game Porting Toolkit 3.0
   macOS build, 27 blocked by kernel anti-cheat, the rest with no known blocker.
   Native-Mac status is verified against Steam's platform data rather than
   asserted
-- 281 unit checks across the environment builder, glob matcher, log classifier
+- 366 unit checks across the environment builder, glob matcher, log classifier
   and preset loader — including a regression case built from the real install
   log, asserting that Wine's harmless shortcut-builder errors raise no false
   alarm
@@ -230,7 +273,12 @@ Not yet verified end to end: the RIDE 4 preset itself. Its rating is inherited
 from CrossOver's published compatibility database, not from a local run — the
 game isn't owned yet. `COMPATIBILITY.md` says exactly which settings are
 reasoned and which are measured, and the preset is labelled accordingly in the
-UI. The Steam-based install path it needs is also still unwritten.
+UI. The Steam install path it would use *is* written and verified with another
+Steam title, so what's missing is the game, not the mechanism.
+
+Nor is gameplay itself: every result above is "the game runs, renders, and
+survives being watched", measured by what the process loaded and how long it
+stayed up. Driving a car around a track is left to a human.
 
 ---
 
