@@ -181,6 +181,22 @@ Staging 11.17.
 
 ### Games actually run on this Mac
 
+<p align="center">
+  <img src="docs/screenshots/games/cave-story.png" alt="Cave Story's title screen, running under EasyPlay on Classic Wine" width="420">
+  <img src="docs/screenshots/games/iji.png" alt="Iji's startup screen, running under EasyPlay on Classic Wine" width="420">
+</p>
+<p align="center">
+  <img src="docs/screenshots/games/spelunky-classic.png" alt="Spelunky Classic's opening sequence, running under EasyPlay on Classic Wine" width="560">
+</p>
+
+Cave Story, Iji and Spelunky Classic, each launched from EasyPlay and captured
+from the game's own window. All three are 32-bit, so EasyPlay routes them to
+Classic Wine; Cave Story is the one that crashes on both other engines.
+Cortex Command isn't pictured: it renders through
+D3DMetal, and a Metal surface hands nothing to macOS' screen-capture API, so its
+window photographs black however long it runs. What it is really doing shows up
+in `easyplay probe` instead, which is the row in the table below.
+
 Every row was launched through EasyPlay on this machine, and the renderer claims
 were checked with `easyplay probe`, which lists the graphics libraries the live
 process actually loaded. "Crashes" means the game started and then died. The
