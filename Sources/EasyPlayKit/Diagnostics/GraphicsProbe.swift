@@ -83,20 +83,33 @@ public struct GraphicsProbe {
         }
 
         let d3dMetal = matches("D3DMetal") + matches("libd3dshared") + matches("metalirconverter")
-        let dxvk = matches("dxvk") + matches("libMoltenVK") + matches("libvulkan")
+        // DXVK's own DLLs are the only proof of DXVK. MoltenVK and libvulkan are
+        // not: Wine Staging maps MoltenVK at startup whether or not anything
+        // asks for Vulkan, and reporting that as "using DXVK" is how the probe
+        // told us TrackMania ran on DXVK when it was really on WineD3D.
+        let dxvk = matches("dxvk")
+        let vulkan = matches("libMoltenVK") + matches("libvulkan")
+        // Wine's own translator, and the OpenGL stack it renders through.
+        let wineD3D = matches("wined3d") + matches("opengl32") + matches("libGL")
+            + matches("OpenGL.framework")
         // Apple's own Metal.framework lives in the dyld shared cache and never
         // appears as a mapped file, so the GPU driver bundle is the reliable
         // signal that Metal is actually driving the GPU.
         let metal = matches("AGXMetal") + matches("metallib") + matches("/Metal.framework/")
         let driver = matches("AGXMetal").first ?? matches("AppleIntelGraphics").first
 
+        // Ordered by how conclusive the evidence is. WineD3D is checked before
+        // Vulkan because a process can have MoltenVK mapped and still be
+        // rendering through wined3d — which is the common case on Wine Staging.
         let translator: GraphicsBackend?
         if !d3dMetal.isEmpty {
             translator = .d3dMetal
         } else if !dxvk.isEmpty {
             translator = .dxvk
-        } else if !matches("wined3d").isEmpty || !matches("libGL").isEmpty || !matches("OpenGL.framework").isEmpty {
+        } else if !wineD3D.isEmpty {
             translator = .wineD3D
+        } else if !vulkan.isEmpty {
+            translator = .dxvk
         } else {
             translator = nil
         }
@@ -106,7 +119,7 @@ public struct GraphicsProbe {
             usingMetal: !metal.isEmpty || driver != nil,
             gpuDriver: driver.map { URL(fileURLWithPath: $0).lastPathComponent },
             processIDs: pids,
-            evidence: Array(Set(d3dMetal + dxvk + metal)).sorted().prefix(12).map { $0 }
+            evidence: Array(Set(d3dMetal + dxvk + wineD3D + vulkan + metal)).sorted().prefix(12).map { $0 }
         )
     }
 }

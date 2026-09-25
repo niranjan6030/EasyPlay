@@ -138,10 +138,23 @@ public struct WineRunner {
     /// while the server is alive produces confusing, intermittent failures.
     @discardableResult
     public func shutdown(timeout: TimeInterval = 30) throws -> CommandResult {
+        // `wineserver` needs this engine's libraries exactly as `wine` does.
+        // Without them it can't start, the kill silently does nothing, and the
+        // game keeps running with nothing left watching it.
         try runner.run(
             backend.wineserver.path, ["-k"],
-            environment: ["WINEPREFIX": bottle.url.path],
+            environment: serverEnvironment(),
             timeout: timeout
         )
+    }
+
+    /// The minimum environment for `wineserver`: which prefix, and where this
+    /// engine's Mac-side libraries are.
+    public func serverEnvironment() -> [String: String] {
+        var environment = ["WINEPREFIX": bottle.url.path]
+        if let libraryPath = backend.libraryPath {
+            environment["DYLD_FALLBACK_LIBRARY_PATH"] = libraryPath.map(\.path).joined(separator: ":")
+        }
+        return environment
     }
 }

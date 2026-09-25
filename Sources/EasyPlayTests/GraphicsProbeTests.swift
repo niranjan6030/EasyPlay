@@ -37,6 +37,20 @@ enum GraphicsProbeTests {
             ])
             Harness.expect(wined3d.translator == .wineD3D, "the OpenGL fallback is recognised")
 
+            // The false positive that made the probe untrustworthy: Wine Staging
+            // maps MoltenVK at startup whether or not anything uses Vulkan, and
+            // TrackMania — rendering through wined3d — was reported as DXVK.
+            let stagingWithVulkan = probe.makeReport(libraries: [
+                "/Users/x/Runtimes/Wine Staging.app/Contents/Resources/wine/lib/libMoltenVK.dylib",
+                "/Users/x/Runtimes/Wine Staging.app/Contents/Resources/wine/lib/wine/x86_64-unix/wined3d.so",
+                "/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL",
+                "/System/Library/Extensions/AGXMetalG16G.bundle/Contents/MacOS/AGXMetalG16G",
+            ])
+            Harness.expect(stagingWithVulkan.translator == .wineD3D,
+                           "MoltenVK alongside wined3d is WineD3D, not DXVK")
+            Harness.expect(stagingWithVulkan.usingMetal,
+                           "OpenGL still reaches the GPU through Metal")
+
             // A process that has not started rendering must not be reported as
             // using anything — guessing here would defeat the point of probing.
             let notYet = probe.makeReport(libraries: ["/usr/lib/libSystem.B.dylib"])

@@ -232,6 +232,15 @@ Related: this Game Porting Toolkit build has **no Vulkan support whatsoever**
 option on this backend either. On this stack the real choice is D3DMetal for
 64-bit programs and WineD3D for everything else.
 
+### Where a game's saves go
+
+Wine points the Windows user folders at the Mac's own, so a game's "My
+Documents" is your real `~/Documents` — TrackMania created `~/Documents/TmForever`
+that way. EasyPlay replaces those links with real folders inside the bottle, so
+saves live at `drive_c/users/<you>/Documents/` and deleting the bottle removes
+them. Existing bottles are repaired on the next launch; anything a game already
+wrote to your home folder stays where it is.
+
 ### Which engine a 32-bit game gets
 
 Losing D3DMetal is not the only problem. Measured on this Mac (M4, macOS 26):

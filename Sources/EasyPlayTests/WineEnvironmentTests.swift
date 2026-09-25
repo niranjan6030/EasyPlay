@@ -70,6 +70,14 @@ enum WineEnvironmentTests {
                 "/usr/lib",
             ], "Classic Wine's own libraries are on the loader path, in order")
 
+            // wineserver needs the engine's libraries too. When it didn't get
+            // them, "stop the game" started a server that couldn't run, reported
+            // success, and left the game running.
+            Harness.expectEqual(
+                WineRunner(backend: classic, bottle: Bottle(name: "Old")).serverEnvironment()["DYLD_FALLBACK_LIBRARY_PATH"],
+                classicPath.joined(separator: ":"),
+                "wineserver is given the same loader path as wine")
+
             // Measured: 32-bit games crash on GPTK's Wine 7.7, and TrackMania
             // crashes on Wine 11.17 but runs on Wine 8.
             let gptk = backend()

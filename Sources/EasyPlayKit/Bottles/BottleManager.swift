@@ -133,7 +133,11 @@ public struct BottleManager {
         _ = try runner.run(newEngine.wineExecutable.path, ["wineboot", "--update"],
                            environment: environment, timeout: 600)
         _ = try runner.run(newEngine.wineserver.path, ["-w"],
-                           environment: ["WINEPREFIX": bottle.url.path], timeout: 120)
+                           environment: WineRunner(backend: newEngine, bottle: bottle, runner: runner)
+                               .serverEnvironment(),
+                           timeout: 120)
+        // `wineboot --update` re-links the Windows user folders to the Mac ones.
+        BottleIsolation.isolateUserFolders(in: bottle.url)
         bottle.backendKind = newEngine.kind
         bottle.graphicsBackend = newEngine.builtinTranslator
         try save(bottle)
@@ -182,6 +186,9 @@ public struct BottleManager {
         try ensureTemplate(onProgress: onProgress)
         onProgress?("Creating a fresh Windows environment…")
         try cloneTemplate(to: bottle.url)
+        // Wine points the Windows Documents, Downloads, Pictures and Music
+        // folders at the real Mac ones. Keep them inside the bottle instead.
+        BottleIsolation.isolateUserFolders(in: bottle.url)
 
         let wine = WineRunner(backend: backend, bottle: bottle, runner: runner)
         if let recipe {

@@ -55,6 +55,14 @@ public struct GameLauncher {
 
         let preflight = self.preflight(executable: executable, recipe: recipe)
 
+        // Cheap, idempotent, and the only place that catches bottles made before
+        // this existed or re-linked by a prefix update.
+        BottleIsolation.isolateUserFolders(in: bottle.url)
+
+        // Wine sometimes opens a window where no display reaches. Watch for it
+        // while the game runs, since it can only be seen once there is a window.
+        let windowWatch = watchForStrandedWindows(named: executable.lastPathComponent)
+
         let arguments = [executable.path] + (recipe?.launch.arguments ?? [])
 
         let result: CommandResult
@@ -69,7 +77,8 @@ public struct GameLauncher {
             // rather than failing, which is exactly when saying so matters most.
             try? store.update(id: game.id) { $0.lastPlayedAt = Date() }
             _ = try? wine.shutdown()
-            return LaunchOutcome(game: game, exitCode: 0, logURL: nil, diagnoses: preflight,
+            return LaunchOutcome(game: game, exitCode: 0, logURL: nil,
+                                 diagnoses: preflight + windowWatch(),
                                  stoppedByTimeout: true)
         }
 
@@ -78,12 +87,62 @@ public struct GameLauncher {
         // Wine often exits 0 after the Windows program inside it has crashed,
         // so the log decides as well as the exit code. EasyPlay reporting a
         // crash as "ran and exited cleanly" is worse than reporting nothing.
-        let diagnoses = preflight + LogClassifier(recipe: recipe)
+        let diagnoses = preflight + windowWatch() + LogClassifier(recipe: recipe)
             .classify(log: result.combinedOutput, exitCode: result.exitCode)
 
         let logURL = try? writeLog(result.combinedOutput, bottle: bottle)
         return LaunchOutcome(game: game, exitCode: result.exitCode,
                              logURL: logURL, diagnoses: diagnoses)
+    }
+
+    /// Starts watching for a game window placed where no display reaches, and
+    /// returns a closure giving whatever was found by the time the game ends.
+    ///
+    /// The checks are spaced out because a window arrives when it arrives: a
+    /// small game draws one in a second, a large one after a loading screen.
+    private func watchForStrandedWindows(named executableName: String) -> () -> [Diagnosis] {
+        let collected = Collected()
+        for delay in [5.0, 15.0, 40.0] {
+            DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+                let pids = GraphicsProbe().processIDs(forExecutableNamed: executableName)
+                guard !pids.isEmpty else { return }
+                collected.add(WindowRescue.rescueWindows(ofProcesses: pids))
+            }
+        }
+        return { collected.diagnoses() }
+    }
+
+    /// Findings arrive on background queues while the game runs, and are read
+    /// on this thread once it ends.
+    private final class Collected: @unchecked Sendable {
+        private let lock = NSLock()
+        private var findings: [WindowRescue.Finding] = []
+
+        func add(_ new: [WindowRescue.Finding]) {
+            lock.lock(); defer { lock.unlock() }
+            findings.append(contentsOf: new)
+        }
+
+        func diagnoses() -> [Diagnosis] {
+            lock.lock(); defer { lock.unlock() }
+            var seen = Set<String>()
+            return findings.compactMap { finding in
+                guard seen.insert(finding.title).inserted else { return nil }
+                let where_ = "x \(Int(finding.frame.origin.x)), y \(Int(finding.frame.origin.y))"
+                if let moved = finding.movedTo {
+                    return Diagnosis(
+                        id: "window-rescued",
+                        title: "A window opened off-screen, and was moved back",
+                        explanation: "Wine put \"\(finding.title)\" outside every display, where you could not click it. EasyPlay moved it to the middle of your screen.",
+                        evidence: "was at \(where_); moved to x \(Int(moved.x)), y \(Int(moved.y))")
+                }
+                return Diagnosis(
+                    id: "window-off-screen",
+                    title: "A window opened where you can't reach it",
+                    explanation: "Wine put \"\(finding.title)\" outside every display, so the game may be waiting for a click on a window you cannot see. \(finding.blockedReason ?? "")",
+                    evidence: "window at \(where_)")
+            }
+        }
     }
 
     /// Checks that can be made before the game runs at all.

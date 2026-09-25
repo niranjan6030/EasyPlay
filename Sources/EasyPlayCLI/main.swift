@@ -558,6 +558,14 @@ func probeGame(_ arguments: [String]) -> Int32 {
 
         let final = report ?? probe.probe(executableNamed: executableName)
 
+        // The launch runs on another thread, so this one exiting would leave the
+        // game running with nothing watching it. Probing is a measurement, not a
+        // play session: stop what it started.
+        if !final.processIDs.isEmpty {
+            _ = try? WineRunner(backend: engine, bottle: bottle).shutdown()
+            print("  \(Colour.dim)Stopped the game again.\(Colour.reset)")
+        }
+
         print("  \(Colour.bold)Actually using:\(Colour.reset) \(final.summary)")
         if let driver = final.gpuDriver {
             print("  \(Colour.bold)GPU driver:\(Colour.reset) \(driver)")

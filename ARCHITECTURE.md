@@ -201,6 +201,42 @@ its libraries through `DYLD_FALLBACK_LIBRARY_PATH`, which macOS silently strips
 when a protected binary like `/usr/bin/nohup` sits in the launch chain, so games
 are launched directly.
 
+### A bottle that actually contains the game
+
+"One bottle per game, delete it and the game is gone" was true of everything
+EasyPlay wrote and false of everything the game wrote. Wine links the Windows
+Documents, Downloads, Pictures and Music folders straight at the Mac ones, so
+TrackMania's save data landed in the user's real `~/Documents`. Nothing warns
+you; the promise just quietly isn't kept.
+
+Those links are now replaced with real folders inside the bottle, at creation,
+after an engine move (`wineboot --update` re-creates them), and before every
+launch, which is what repairs bottles made before the fix. Only links pointing
+out of the bottle are touched, and removing a link never touches the folder it
+pointed at.
+
+The `z:` drive still maps the whole filesystem, as it does in every Wine prefix;
+removing it breaks installers that reference Unix paths. Isolation here means
+"where the game saves by default", not a sandbox — and EasyPlay says so rather
+than implying more.
+
+### Two bugs that only showed up in a real game
+
+**A probe that lied.** `easyplay probe` reported DXVK for a game rendering
+through WineD3D, because it counted MoltenVK as evidence — and Wine Staging maps
+MoltenVK at startup regardless. A diagnostic tool that is confidently wrong is
+worse than none, so DXVK now needs DXVK's own libraries, and WineD3D is checked
+before Vulkan.
+
+**A window nobody could reach.** Wine 11 opened TrackMania's dialog at
+x = −2577 on a 1470-point display: the game was running, waiting for a click on
+a window that was nowhere. Clicking the Dock icon, Mission Control and moving
+the mouse all fail, because the window isn't hidden — it is outside every
+screen. EasyPlay now watches the windows of the process it launched, and moves a
+stranded one back to the middle of the display, or explains what it found if it
+hasn't been granted Accessibility permission. A window merely hanging off an
+edge is normal and left alone.
+
 ### A chatbot that refuses to guess
 
 The natural-language front door ("can I run Elden Ring?") is the one feature
