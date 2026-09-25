@@ -520,9 +520,10 @@ func probeGame(_ arguments: [String]) -> Int32 {
         let recipe = game.recipeID.flatMap { try? RecipeLibrary().recipe(id: $0) }
 
         print("\nLaunching \(Colour.bold)\(game.title)\(Colour.reset) and watching what it loads…")
-        if let recipe {
-            print("  Preset asks for: \(Colour.bold)\(recipe.graphics.backend.displayName)\(Colour.reset)\n")
-        }
+        // Without a preset, the bottle's own setting is what was asked for.
+        let expected = recipe?.graphics.backend ?? bottle.graphicsBackend
+        let expectedSource = recipe == nil ? "This bottle is set to" : "Preset asks for"
+        print("  \(expectedSource): \(Colour.bold)\(expected.displayName)\(Colour.reset)\n")
 
         // The launch blocks until the game exits, so it runs on another thread
         // while this one waits for the process to appear and then inspects it.
@@ -582,16 +583,17 @@ func probeGame(_ arguments: [String]) -> Int32 {
             final.evidence.forEach { print("    \(Colour.dim)\($0)\(Colour.reset)") }
         }
 
-        let matched = final.translator == recipe?.graphics.backend
+        let matched = final.translator == expected
         print("")
         if final.translator == nil {
             print("  \(Colour.red)No translator detected — the game may not have started rendering.\(Colour.reset)\n")
             return 1
         }
+        let asked = recipe == nil ? "what this bottle is set to" : "the preset"
         if matched {
-            print("  \(Colour.green)Matches the preset.\(Colour.reset)\n")
+            print("  \(Colour.green)Matches \(asked).\(Colour.reset)\n")
         } else {
-            print("  \(Colour.yellow)Does not match the preset — Wine fell back to something else.\(Colour.reset)\n")
+            print("  \(Colour.yellow)Does not match \(asked) — Wine fell back to something else.\(Colour.reset)\n")
         }
         return matched ? 0 : 1
     } catch {
