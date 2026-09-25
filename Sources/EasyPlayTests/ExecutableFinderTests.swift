@@ -70,6 +70,40 @@ enum ExecutableFinderTests {
             Harness.expect(!names.contains("xtool.exe"),
                            "an installer's temp-directory extractor is not mistaken for the game")
 
+            // A Steam bottle whose download never finished holds nothing but
+            // Steam's own binaries, and the biggest of them — streaming_client —
+            // was picked as if it were the game.
+            for relative in ["Program Files (x86)/Steam/streaming_client.exe",
+                             "Program Files (x86)/Steam/bin/SteamService.exe",
+                             "Program Files (x86)/Steam/steamapps/common/Fallout Shelter/FalloutShelter.exe"] {
+                let url = bottle.driveC.appendingPathComponent(relative)
+                try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
+                                                         withIntermediateDirectories: true)
+                try? Data(repeating: 0, count: 3_000_000).write(to: url)
+            }
+            // Windows ships its own applications under Program Files, so
+            // excluding only /windows left WordPad as the best "game" in a
+            // bottle that held no game at all.
+            for relative in ["Program Files/Windows NT/Accessories/wordpad.exe",
+                             "Program Files/Internet Explorer/iexplore.exe"] {
+                let url = bottle.driveC.appendingPathComponent(relative)
+                try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
+                                                         withIntermediateDirectories: true)
+                try? Data(repeating: 0, count: 4_000_000).write(to: url)
+            }
+
+            let steamExecutables = finder.candidates(glob: "**/*.exe", in: bottle).map(\.lastPathComponent)
+            Harness.expect(!steamExecutables.contains("wordpad.exe"),
+                           "Windows' own bundled programs are not mistaken for the game")
+            Harness.expect(!steamExecutables.contains("iexplore.exe"),
+                           "nor is Internet Explorer")
+            Harness.expect(!steamExecutables.contains("streaming_client.exe"),
+                           "Steam's own client is not mistaken for the game")
+            Harness.expect(!steamExecutables.contains("SteamService.exe"),
+                           "nor is anything else in Steam's program folder")
+            Harness.expect(steamExecutables.contains("FalloutShelter.exe"),
+                           "but a game under steamapps/common is still found")
+
             // Regression: the bottle health check targets Wine's own Minesweeper
             // in windows/system32. Skipping system programs while guessing must
             // not stop a preset that names one on purpose.

@@ -220,6 +220,23 @@ removing it breaks installers that reference Unix paths. Isolation here means
 "where the game saves by default", not a sandbox — and EasyPlay says so rather
 than implying more.
 
+### Adopting a game the library forgot
+
+The bottle holds the game; the library holds the entry that gives it a Play
+button. They can drift apart — an entry pruned while its bottle survived, an
+install interrupted between copying the files and writing the entry — and the
+result is a game that is fully installed and completely unreachable. Telling
+someone to reinstall a game sitting right there on their disk is the kind of
+answer this project exists to avoid, so `easyplay adopt` looks inside the bottle
+and re-adds what it finds.
+
+Guessing which program is the game is the hard half, and two real bottles showed
+where the guess went wrong. "Largest executable wins" picked Steam's
+`streaming_client.exe` in a bottle whose download never finished, and then
+WordPad, because Windows' own applications live under `Program Files` rather
+than `/windows`. Both are now excluded, which has the useful side effect that a
+bottle containing no game says so instead of adopting something absurd.
+
 ### Two bugs that only showed up in a real game
 
 **A probe that lied.** `easyplay probe` reported DXVK for a game rendering

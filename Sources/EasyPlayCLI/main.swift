@@ -33,6 +33,10 @@ func printUsage() {
                        [--bottle <id>] [--exe <program.exe>] [--name <title>]
                                    Install a game: runs an installer, or copies in
                                    a zip or folder and picks its program
+      easyplay adopt [<bottle-id>] [--exe <program.exe>] [--name <title>]
+                                   Add a game that is already in a bottle back to
+                                   your library. With no bottle, lists the ones
+                                   holding a game the library doesn't know about
       easyplay steam-signin <username>
                                    Sign in to Steam once (you type your password
                                    into Valve's SteamCMD, never into EasyPlay)
@@ -792,6 +796,50 @@ func steamInstall(_ arguments: [String]) -> Int32 {
     }
 }
 
+// MARK: - Adopting an installed game
+
+func adoptGame(_ arguments: [String]) -> Int32 {
+    guard let backend = resolveBackend() else { return 1 }
+    let manager = BottleManager(backend: backend)
+    let adopter = GameAdopter()
+
+    guard let bottleID = arguments.first, !bottleID.hasPrefix("--") else {
+        let orphans = adopter.unregisteredBottles(from: manager.list())
+        guard !orphans.isEmpty else {
+            print("\nEvery bottle's game is in your library.\n")
+            return 0
+        }
+        print("\n\(Colour.bold)Bottles holding a game your library doesn't know about\(Colour.reset)\n")
+        for bottle in orphans {
+            print("  \(Colour.bold)\(bottle.name)\(Colour.reset)")
+            print("    \(Colour.dim)\(bottle.id)\(Colour.reset)")
+            if let candidate = try? adopter.candidate(in: bottle) {
+                print("    would add: \(candidate.title) — \(candidate.relativePath)")
+            } else {
+                print("    \(Colour.yellow)no program found inside\(Colour.reset)")
+            }
+        }
+        print("\n  Add one with: easyplay adopt <bottle-id>\n")
+        return 0
+    }
+
+    do {
+        let bottle = try manager.bottle(id: bottleID)
+        let candidate = try adopter.candidate(in: bottle, executableName: value(of: "--exe", in: arguments))
+        print("\nFound \(Colour.bold)\(candidate.relativePath)\(Colour.reset) in \"\(bottle.name)\".")
+        if !candidate.alternatives.isEmpty {
+            print("  \(Colour.dim)Also present: \(candidate.alternatives.joined(separator: ", "))")
+            print("  If that's the wrong one, run again with --exe <program.exe>.\(Colour.reset)")
+        }
+        let game = try adopter.adopt(candidate, titled: value(of: "--name", in: arguments)) { print("  \($0)") }
+        print("\n  play it with: easyplay play \(game.id)\n")
+        return 0
+    } catch {
+        print("\n\(Colour.red)\(error.localizedDescription)\(Colour.reset)\n")
+        return 1
+    }
+}
+
 // MARK: - Engines
 
 func installEngine() -> Int32 {
@@ -820,6 +868,8 @@ let exitCode: Int32
 switch arguments.first {
 case "doctor":
     exitCode = doctor()
+case "adopt":
+    exitCode = adoptGame(Array(arguments.dropFirst()))
 case "install-engine":
     exitCode = installEngine()
 case "recipes":

@@ -19,11 +19,28 @@ public struct ExecutableFinder {
     /// the single most likely thing to be mistaken for one.
     private static let systemDirectories = [
         "/windows/",
+        // Windows' own bundled applications. They live under Program Files
+        // rather than /windows, so nothing above excluded them, and in a bottle
+        // with no game installed WordPad became the "game".
+        "/program files/windows nt/",
+        "/program files (x86)/windows nt/",
+        "/program files/internet explorer/",
+        "/program files (x86)/internet explorer/",
+        "/program files/windows media player/",
+        "/program files (x86)/windows media player/",
+        "/program files/common files/",
+        "/program files (x86)/common files/",
         "/users/crossover/temp/",
         "/users/public/temp/",
         "/temp/",
         "/tmp/",
     ]
+
+    /// Steam's own programs, as opposed to the games it downloads.
+    private static func isSteamClient(_ relativePath: String) -> Bool {
+        guard relativePath.contains("/steam/") || relativePath.contains("/steam/bin/") else { return false }
+        return !relativePath.contains("/steamapps/")
+    }
 
     /// Executables installers routinely leave beside a game.
     /// Matched anywhere in the name, because games prefix them freely:
@@ -134,6 +151,12 @@ public struct ExecutableFinder {
             .replacingOccurrences(of: bottle.driveC.path, with: "")
             .lowercased()
         if Self.systemDirectories.contains(where: { relative.hasPrefix($0) }) { return true }
+        // The Steam client is the delivery mechanism, never the game. Its own
+        // binaries are the largest executables in a Steam bottle, so without
+        // this a bottle whose download never finished looks like it contains a
+        // 100 MB game called "streaming_client". Games live under
+        // steamapps/common, which stays visible.
+        if Self.isSteamClient(relative) { return true }
 
         let name = url.deletingPathExtension().lastPathComponent.lowercased()
         return Self.notAGame.contains { name.hasPrefix($0) }

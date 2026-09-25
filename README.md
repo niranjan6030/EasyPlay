@@ -168,6 +168,7 @@ swift run easyplay verify <bottle-id>     # prove the bottle runs Windows progra
 swift run easyplay install setup.exe --bottle <id>
 swift run easyplay steam-signin <account>   # once: you type your password into SteamCMD
 swift run easyplay steam-install fallout-shelter
+swift run easyplay adopt                  # re-add a game already in a bottle
 swift run easyplay games
 swift run easyplay play <game-id>
 ```

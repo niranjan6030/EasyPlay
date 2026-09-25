@@ -248,7 +248,12 @@ Losing D3DMetal is not the only problem. Measured on this Mac (M4, macOS 26):
 | Game (32-bit) | GPTK's Wine 7.7 | Classic Wine 8.0.1 | Wine Staging 11.17 |
 |---|---|---|---|
 | TrackMania Nations Forever (DirectX 9) | crashes (allocator assertion) | **runs**: 3D menus rendered via WineD3D → OpenGL → Metal, no crash in 4+ minutes | crashes: `Exception frame is not in stack limits` in its new WoW64 exception handling |
-| Cave Story, Spelunky Classic, Iji | crash | not yet re-tested | start |
+| Cave Story (DirectX / SDL) | crashes | **runs** | crashes: same `invalid frame` SEH bug as TrackMania |
+| Iji, Spelunky Classic | crash | **run** | run |
+
+Classic Wine is the only engine of the three that runs every 32-bit game tested
+here, which is why it is preferred over Wine 11 rather than merely used as a
+fallback.
 
 So EasyPlay picks the engine from the installed program's PE header, not from the
 preset: 64-bit games go to the Game Porting Toolkit, 32-bit games go to **Classic
